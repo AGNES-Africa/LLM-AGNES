@@ -1,2 +1,2 @@
 **/*.pyc
-backend/migrations/*
+**/.DS_Store
