@@ -12,6 +12,15 @@ class ArticleListAPIView(generics.ListAPIView):
         return Article.objects.all()
     
 
+class ArticleDetailAPIView(generics.RetrieveAPIView):
+
+    serializer_class = ArticleSerializer
+
+    def get_queryset(self):
+        queryset = Article.objects.all()
+        return queryset
+    
+
 class GenderArticleListAPIView(generics.ListAPIView):
 
     serializer_class = ArticleSerializer
@@ -19,7 +28,7 @@ class GenderArticleListAPIView(generics.ListAPIView):
     
     def get_queryset(self):
         queryset = Article.objects.filter(negotiation_stream_id=2)
-        return queryset
+        return queryset.order_by("created_at")
     
     
 class AgricultureArticleListAPIView(generics.ListAPIView):
