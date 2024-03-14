@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Inter } from "next/font/google";
 import "./globals.css";
 
@@ -16,7 +17,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={inter.className}>
+      <div>
+        <div>
+          <Image
+            src="/climate_action-ai-logo.png"
+            alt="Climate Action AI Logo"
+            width={350}
+            height={50}
+            priority
+          />
+        </div>
+      </div>
+      <div>{children}</div>
+      </body>
     </html>
   );
 }
