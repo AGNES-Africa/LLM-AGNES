@@ -3,17 +3,18 @@ from .models import Article, Source, Category, NegotiationStream, Resource
 
 class ArticleSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source="title")
+    created_at = serializers.DateTimeField(read_only=True, format="%Y-%m-%d")
 
     class Meta:
         model = Article
-        fields = ["name","summary","size"]
+        fields = ["name","summary","size","category_id","created_at","url"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Category
-        fields = ["name","summary","size"]
+        fields = ["id","name","size"]
 
 
 class SourceSerializer(serializers.ModelSerializer):
@@ -41,4 +42,4 @@ class FrontendSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = NegotiationStream
-        fields = ["name", "summary", "children"]
+        fields = ["name", "children"]

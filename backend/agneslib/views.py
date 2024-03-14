@@ -10,7 +10,7 @@ class ArticleListAPIView(generics.ListAPIView):
     paginate_by = 100
 
     def get_queryset(self):
-        return Article.objects.all()
+        return Article.objects.filter(category_id=self.kwargs["category_id"])
     
 
 class FrontendGroupView(generics.ListCreateAPIView):
