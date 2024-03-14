@@ -1,10 +1,14 @@
 from django.db import models
 from django.template.defaultfilters import slugify
 
+
 class NegotiationStream(models.Model):
     title = models.CharField(max_length=200)
     summary = models.TextField()
     slug = models.SlugField(max_length=255, blank=True, null=True)
+
+    class Meta:
+        db_table = "NegotiationStream"
 
     def __str__(self):
         return self.title
@@ -24,6 +28,9 @@ class Source(models.Model):
     summary = models.TextField()
     slug = models.SlugField(max_length=255, blank=True, null=True)
 
+    class Meta:
+        db_table = "Source"
+
     def __str__(self):
         return self.title
     
@@ -37,11 +44,40 @@ class Source(models.Model):
         super(Source, self).save(*args, **kwargs)
 
 
+class Resource(models.Model):
+    title = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, blank=True, null=True)
+    slug = models.SlugField(max_length=255, blank=True, null=True)
+    size = models.IntegerField(default=1)
+    negotiation_stream_id = models.ForeignKey(to=NegotiationStream, on_delete=models.DO_NOTHING, related_name="children")
+    source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING, related_name="linked")
+
+    class Meta:
+        db_table = "Resource"
+
+    def __str__(self):
+        return self.title
+    
+    def save(self, *args, **kwargs):
+        to_assign = slugify(self.title)
+
+        if Resource.objects.filter(slug=to_assign).exists():
+            to_assign = to_assign + str(Resource.objects.all().count())
+
+        self.slug = to_assign
+        super(Resource, self).save(*args, **kwargs)
+
+
 class Category(models.Model):
     title = models.CharField(max_length=200)
+    name = models.CharField(max_length=200, blank=True, null=True)
     summary = models.TextField()
     slug = models.SlugField(max_length=255, blank=True, null=True)
-    source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING, default=0)
+    size = models.IntegerField(default=1)
+    source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING,  blank=True, null=True, related_name="children")
+    
+    class Meta:
+        db_table = "Category"
 
     def __str__(self):
         return self.title
@@ -62,11 +98,14 @@ class Article(models.Model):
     slug = models.SlugField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField()
     url = models.URLField()
-    category_id = models.ForeignKey(to=Category, on_delete=models.DO_NOTHING)
+    size = models.IntegerField(default=1)
+    negotiation_stream_id = models.ForeignKey(to=NegotiationStream, on_delete=models.DO_NOTHING)
     source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING)
-    negotiation_stream_id = models.ForeignKey(to=NegotiationStream, on_delete=models.DO_NOTHING, default=0)
-
+    resource_id = models.ForeignKey(to=Resource, on_delete=models.DO_NOTHING, blank=True, null=True)
+    category_id = models.ForeignKey(to=Category, on_delete=models.DO_NOTHING, related_name="children", blank=True, null=True)
+    
     class Meta:
+        db_table = "Article"
         ordering=("-created_at",)
 
     def __str__(self):

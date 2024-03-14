@@ -1,22 +1,44 @@
 from rest_framework import serializers
-from .models import Article, Source, Category
+from .models import Article, Source, Category, NegotiationStream, Resource
 
 class ArticleSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="title")
 
     class Meta:
-        model=Article
-        fields="__all__"
-
-
-class SourceSerializer(serializers.ModelSerializer):
-
-    class Meta:
-        model=Source
-        fields="__all__"
+        model = Article
+        fields = ["name","summary","size"]
 
 
 class CategorySerializer(serializers.ModelSerializer):
 
     class Meta:
-        model=Category
-        fields="__all__"
+        model = Category
+        fields = ["name","summary","size"]
+
+
+class SourceSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Source
+        fields = "__all__"
+
+
+class ResourceSerializer(serializers.ModelSerializer):
+    children = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Resource
+        fields = ["name","size","children"]
+
+    def get_children(self, obj):
+        qs = Category.objects.filter(source_id=obj.source_id)
+        return CategorySerializer(qs, many=True, read_only=True).data
+
+
+class FrontendSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="title")
+    children = ResourceSerializer(many=True)
+
+    class Meta:
+        model = NegotiationStream
+        fields = ["name", "summary", "children"]

@@ -1,7 +1,8 @@
 from django.shortcuts import render
+from django.db.models import Count
 from rest_framework import generics
-from .models import Article
-from .serializers import ArticleSerializer#, SourceSerializer, CategorySerializer
+from .models import Article, Category, NegotiationStream
+from .serializers import ArticleSerializer, FrontendSerializer#, SourceSerializer, 
 
 class ArticleListAPIView(generics.ListAPIView):
 
@@ -10,6 +11,15 @@ class ArticleListAPIView(generics.ListAPIView):
 
     def get_queryset(self):
         return Article.objects.all()
+    
+
+class FrontendGroupView(generics.ListCreateAPIView):
+    
+    serializer_class = FrontendSerializer
+
+    def get_queryset(self):
+        return NegotiationStream.objects.all()
+    
     
 
 class ArticleDetailAPIView(generics.RetrieveAPIView):

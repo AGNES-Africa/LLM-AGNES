@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Article, Source, Category, NegotiationStream
+from .models import Article, Source, Resource, Category, NegotiationStream
 
 class ArticleModelAdmin(admin.ModelAdmin):
     list_display = ('title', 'created_at')
@@ -8,5 +8,6 @@ class ArticleModelAdmin(admin.ModelAdmin):
 
 admin.site.register(Article, ArticleModelAdmin)
 admin.site.register(Source)
+admin.site.register(Resource)
 admin.site.register(Category)
 admin.site.register(NegotiationStream)
