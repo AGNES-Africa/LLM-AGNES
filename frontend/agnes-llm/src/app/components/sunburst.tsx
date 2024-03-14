@@ -2,12 +2,14 @@
 
 import Sunburst from 'sunburst-chart';
 import React, { useRef, useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 const d3 = require('d3');
 
 export default function AgnesSunburstChart() {
   const sunburstDiv = useRef(null);
-  const [data, setData] = useState(null)
-  const [isLoading, setLoading] = useState(true)
+  const [data, setData] = useState(null);
+  const [isLoading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
     fetch('http://localhost:8000/api/db_hierarchy')
@@ -37,7 +39,8 @@ export default function AgnesSunburstChart() {
           .onClick((node) => {
             if (node != null){
               if(node.children == null){
-                console.log("None")
+                console.log(node)
+                router.push('/category/'+node.id)
               }
               else{
                 sunburst.focusOnNode(node)

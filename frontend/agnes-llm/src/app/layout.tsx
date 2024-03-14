@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Inter } from "next/font/google";
 import "./globals.css";
+import {Providers} from "./providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -17,8 +18,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-      <div>
+      <body className="dark text-foreground bg-background">     
+      <Providers>
+      <div className="dark">
         <div>
           <Image
             src="/climate_action-ai-logo.png"
@@ -30,6 +32,7 @@ export default function RootLayout({
         </div>
       </div>
       <div>{children}</div>
+      </Providers>
       </body>
     </html>
   );
