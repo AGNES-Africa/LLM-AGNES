@@ -3,6 +3,7 @@
 import Sunburst from 'sunburst-chart';
 import React, { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import {Breadcrumbs, BreadcrumbItem} from "@nextui-org/react";
 const d3 = require('d3');
 
 export default function AgnesSunburstChart() {
@@ -18,13 +19,13 @@ export default function AgnesSunburstChart() {
         setData(data)
         setLoading(false)
 
-        data[0]["color"] = '#27563B'
-        data[1]["color"] = '#D1A79B'
-        data[2] = {"name": "Finance", color:"#38225B", size:6}
-        data[3] = {"name": "Stream", color:"#818EA8", size:6}
+        data[0]["color"] = '#176857'
+        data[1]["color"] = '#213f7f'
+        data[2] = {"name": "Finance", color:"#8e5fa8", size:3}
+        data[3] = {"name": "Stream", color:"#818EA8", size:2}
 
         const data1 = {
-          "name": 'Negotiation Streams', color : '#1C2F3F', //'#0063db',
+          "name": 'Climate Action Streams', color : '#1C2F3F', //'#0063db',
           "children" : data 
         }
        
@@ -38,9 +39,13 @@ export default function AgnesSunburstChart() {
           .radiusScaleExponent(1)
           .onClick((node) => {
             if (node != null){
+              const data_node = node.__dataNode
+              console.log(data_node)
               if(node.children == null){
-                console.log(node)
-                router.push('/category/'+node.id)
+                if (data_node != null){
+                  const stream_id = data_node?.parent?.parent?.id
+                  //router.push('/category/'+stream_id+'/'+node.id)
+                }
               }
               else{
                 sunburst.focusOnNode(node)
@@ -50,5 +55,14 @@ export default function AgnesSunburstChart() {
           (sunburstDiv.current!);
       })
   }, [sunburstDiv]);
-  return <div><div id="sunburst-chart" ref={sunburstDiv}></div></div>;
+  return <div>
+    <div className="flex flex-col flex-wrap gap-4">
+      <Breadcrumbs>
+        <BreadcrumbItem>Climate Action Streams</BreadcrumbItem>
+        <BreadcrumbItem>Agriculture</BreadcrumbItem>
+        <BreadcrumbItem>UNFCCC Resources</BreadcrumbItem>
+      </Breadcrumbs>
+    </div>
+    <div id="sunburst-chart" ref={sunburstDiv}></div>
+  </div>;
 }
