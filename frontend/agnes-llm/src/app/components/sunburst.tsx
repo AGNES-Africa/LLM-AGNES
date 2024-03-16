@@ -3,14 +3,26 @@
 import Sunburst from 'sunburst-chart';
 import React, { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import {Breadcrumbs, BreadcrumbItem} from "@nextui-org/react";
-const d3 = require('d3');
+import parse from 'html-react-parser';
 
 export default function AgnesSunburstChart() {
   const sunburstDiv = useRef(null);
+  let [node_stack, setNodeStack] = useState("<div class='breadcrumb flat'><a class='drop-container'>Climate Action Streams</a></div>")
   const [data, setData] = useState(null);
   const [isLoading, setLoading] = useState(true);
   const router = useRouter();
+
+  const getNodeStack = (d:any) => {
+    var stack = [];
+    var curNode = d;
+    while (curNode) {
+      if(curNode.data){
+        stack.unshift("<a>"+curNode.data.name+"</a>");
+      }
+      curNode = curNode.parent;
+    }
+    return "<div class='breadcrumb flat'>"+stack.join("")+"</div>";
+  };
 
   useEffect(() => {
     fetch('http://localhost:8000/api/db_hierarchy')
@@ -40,11 +52,13 @@ export default function AgnesSunburstChart() {
           .onClick((node) => {
             if (node != null){
               const data_node = node.__dataNode
-              console.log(data_node)
+              node_stack = getNodeStack(data_node)
+              setNodeStack(node_stack)
+              console.log(node_stack)
               if(node.children == null){
                 if (data_node != null){
                   const stream_id = data_node?.parent?.parent?.id
-                  //router.push('/category/'+stream_id+'/'+node.id)
+                  router.push('/category/'+stream_id+'/'+node.id)
                 }
               }
               else{
@@ -56,13 +70,9 @@ export default function AgnesSunburstChart() {
       })
   }, [sunburstDiv]);
   return <div>
-    <div className="flex flex-col flex-wrap gap-4">
-      <Breadcrumbs>
-        <BreadcrumbItem>Climate Action Streams</BreadcrumbItem>
-        <BreadcrumbItem>Agriculture</BreadcrumbItem>
-        <BreadcrumbItem>UNFCCC Resources</BreadcrumbItem>
-      </Breadcrumbs>
+    <div className="flex flex-col flex-wrap gap-4 text-sm">
+      {parse(node_stack)}
     </div>
-    <div id="sunburst-chart" ref={sunburstDiv}></div>
+    <div className="flex flex-col flex-wrap" id="sunburst-chart" ref={sunburstDiv}></div>
   </div>;
 }

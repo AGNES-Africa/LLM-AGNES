@@ -1,7 +1,6 @@
 import React from "react";
 import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link} from "@nextui-org/react";
 import Image from "next/image";
-import SearchBox from "./SearchBox";
 
 export default function NavBar() {
   return (
@@ -27,9 +26,6 @@ export default function NavBar() {
           <Link href="#" color="foreground">
             About
           </Link>
-        </NavbarItem>
-        <NavbarItem>
-          <SearchBox/>
         </NavbarItem>
       </NavbarContent>
     </Navbar>
