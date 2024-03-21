@@ -7,7 +7,11 @@ import parse from 'html-react-parser';
 
 export default function AgnesSunburstChart() {
   const sunburstDiv = useRef(null);
-  let [node_stack, setNodeStack] = useState("<div class='breadcrumb flat'><a class='drop-container'>Climate Action Streams</a></div>")
+  let [node_stack, setNodeStack] = useState(`<div class='breadcrumb flat'>
+    <a class='drop-container'>
+      Climate Action Streams
+    </a>
+  </div>`)
   const [data, setData] = useState(null);
   const [isLoading, setLoading] = useState(true);
   const router = useRouter();
