@@ -13,17 +13,12 @@ export default function AgnesSunburstChart() {
   </div>`)
 
   const sunburstDiv = useRef(null);
-  const [data, setData] = useState(null);
-  const [isLoading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
     fetch('http://localhost:8000/api/db_hierarchy')
       .then((res) => res.json())
       .then((data:any) => {
-        setData(data)
-        setLoading(false)
-
         data[0]["color"] = '#176857'
         data[1]["color"] = '#213f7f'
         data[2] = {"name": "Finance", color:"#8e5fa8", size:3}
@@ -72,8 +67,6 @@ export default function AgnesSunburstChart() {
             }
           })
           (sunburstDiv.current!);
-
-        //setSunburst(sunburst);
       })
   }, [sunburstDiv]);
   return <Container>
