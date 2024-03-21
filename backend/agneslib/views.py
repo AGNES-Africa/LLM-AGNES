@@ -13,6 +13,16 @@ class ArticleListAPIView(generics.ListAPIView):
         return Article.objects\
             .filter(negotiation_stream_id=self.kwargs["stream_id"])\
             .filter(category_id=self.kwargs["category_id"])
+
+
+class ArticleListAllAPIView(generics.ListAPIView):
+
+    serializer_class = ArticleSerializer
+    paginate_by = 100
+
+    def get_queryset(self):
+        return Article.objects\
+            .order_by("-created_at")
     
 
 class FrontendGroupView(generics.ListCreateAPIView):
