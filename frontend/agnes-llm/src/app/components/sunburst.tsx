@@ -3,31 +3,19 @@
 import Sunburst from 'sunburst-chart';
 import React, { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import parse from 'html-react-parser';
 import { Container, Row, Col } from "reactstrap";
 
 export default function AgnesSunburstChart() {
-  const sunburstDiv = useRef(null);
   let [node_stack, setNodeStack] = useState(`<div class='breadcrumb flat'>
     <a class='drop-container'>
       Climate Action Streams
     </a>
   </div>`)
+
+  const sunburstDiv = useRef(null);
   const [data, setData] = useState(null);
   const [isLoading, setLoading] = useState(true);
   const router = useRouter();
-
-  const getNodeStack = (d:any) => {
-    var stack = [];
-    var curNode = d;
-    while (curNode) {
-      if(curNode.data){
-        stack.unshift("<a>"+curNode.data.name+"</a>");
-      }
-      curNode = curNode.parent;
-    }
-    return "<div class='breadcrumb flat'>"+stack.join("")+"</div>";
-  };
 
   useEffect(() => {
     fetch('http://localhost:8000/api/db_hierarchy')
@@ -45,6 +33,18 @@ export default function AgnesSunburstChart() {
           "name": 'Climate Action Streams', color : '#1C2F3F', //'#0063db',
           "children" : data 
         }
+
+        const getNodeStack = (d:any, sunburst:any) => {
+          var stack = [];
+          var curNode = d.__dataNode;
+          while (curNode) {
+            if(curNode.data){
+              stack.unshift("<a onClick={window.sunburst.focusOnNode(d)}>"+curNode.data.name+"</a>");
+            }
+            curNode = curNode.parent;
+          }
+          return "<div class='breadcrumb flat'>"+stack.join("")+"</div>";
+        };
        
         const sunburst = Sunburst()
           .data(data1)
@@ -57,7 +57,7 @@ export default function AgnesSunburstChart() {
           .onClick((node) => {
             if (node != null){
               const data_node = node.__dataNode
-              node_stack = getNodeStack(data_node)
+              node_stack = getNodeStack(node, sunburst)
               setNodeStack(node_stack)
               console.log(node_stack)
               if(node.children == null){
@@ -72,12 +72,14 @@ export default function AgnesSunburstChart() {
             }
           })
           (sunburstDiv.current!);
+
+        //setSunburst(sunburst);
       })
   }, [sunburstDiv]);
   return <Container>
     <Row>
       <Col md={1}></Col>
-      <Col>{parse(node_stack)}</Col>
+      <div dangerouslySetInnerHTML={{__html: node_stack}}></div>
     </Row>
     <Row>
       <Col>
