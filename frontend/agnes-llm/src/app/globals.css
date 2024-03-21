@@ -30,6 +30,10 @@ body {
   font-family: 'Merriweather Sans', arial, verdana;
 }
 
+.dark-mode {
+  background-color: #000 !important;
+}
+
 .breadcrumb {
 	/*centering*/
 	display: inline-block;

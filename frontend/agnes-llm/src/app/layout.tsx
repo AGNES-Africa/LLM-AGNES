@@ -3,7 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import {Providers} from "./providers";
 import NavBar from "./components/NavBar";
-
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Container, Row, Col } from "reactstrap";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -16,8 +17,9 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning data-bs-theme="dark">
       <head>
         <script dangerouslySetInnerHTML={{
           __html: `
@@ -34,9 +36,15 @@ export default function RootLayout({
       <body className="dark"> 
         <Providers>
           <div className="dark">
-            <NavBar/>
+            <Container>
+              <Row>
+                <NavBar/>
+              </Row>
+              <Row>
+                <div className="dark">{children}</div>
+              </Row>
+              </Container>
           </div>
-          <div className="dark">{children}</div>
         </Providers>
       </body>
     </html>
