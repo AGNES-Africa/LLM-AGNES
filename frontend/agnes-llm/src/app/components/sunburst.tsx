@@ -4,6 +4,7 @@ import Sunburst from 'sunburst-chart';
 import React, { useRef, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import parse from 'html-react-parser';
+import { Container, Row, Col } from "reactstrap";
 
 export default function AgnesSunburstChart() {
   const sunburstDiv = useRef(null);
@@ -73,10 +74,15 @@ export default function AgnesSunburstChart() {
           (sunburstDiv.current!);
       })
   }, [sunburstDiv]);
-  return <div>
-    <div className="flex flex-col flex-wrap gap-4 text-sm">
-      {parse(node_stack)}
-    </div>
-    <div className="flex flex-col flex-wrap" id="sunburst-chart" ref={sunburstDiv}></div>
-  </div>;
+  return <Container>
+    <Row>
+      <Col md={1}></Col>
+      <Col>{parse(node_stack)}</Col>
+    </Row>
+    <Row>
+      <Col>
+        <div className="flex flex-col flex-wrap" id="sunburst-chart" ref={sunburstDiv}></div>
+      </Col>
+    </Row>
+  </Container>;
 }
