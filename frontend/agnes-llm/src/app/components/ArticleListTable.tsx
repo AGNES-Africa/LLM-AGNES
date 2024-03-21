@@ -1,5 +1,3 @@
-"use client";
-
 import React from "react";
 import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Tooltip, getKeyValue, Spinner, Button} from "@nextui-org/react";
 import {useAsyncList} from "@react-stately/data";
@@ -19,7 +17,6 @@ export default function ArticleListTable({stream_id,category_id}:any) {
       });
       let json = await res.json();
       setIsLoading(false);
-      console.log(json)
       return {
         items: json,
       };
