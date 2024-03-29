@@ -91,7 +91,6 @@ export default function SunburstChart(){
                 events: {
                     click: function(e) {
                         var chart = this.series.chart;
-                        //console.log(e)
                         if((e.point.id == '1') || (e.point.id == '2') || (e.point.id == '3') || (e.point.id == '4')){
                             triggerLevel(3, chart)
                         }
@@ -151,24 +150,30 @@ export default function SunburstChart(){
         },
         navigation: {
             breadcrumbs: {
+                showFullPath: false,
+                buttonTheme: {
+                    fill: '#f7f7f7',
+                    padding: 8,
+                    stroke: '#cccccc',
+                    'stroke-width': 1
+                },
                 events: {
                     click: function(e,br) {
                         var chart = this.chart;
-                        //console.log(e)
-                        console.log(br.level)
-                        if(br.level == 1){
-                            showLevel(2, chart)
-                            hideLevel(3, chart)
-                            hideLevel(4, chart)
-                        }
-                        if(br.level == 2){
-                            sunburst_icon.destroy()
-                            showLevel(3, chart)
-                            hideLevel(4, chart)
-                        }
-                        if(br.level == 3){
-                            //open list
-                        }
+                        setTimeout(function () {
+                            if(e.newLevel == 1){
+                                showLevel(2, chart)
+                                hideLevel(3, chart)
+                                hideLevel(4, chart)
+                            }
+                            if(e.newLevel == 2){
+                                showLevel(3, chart)
+                                hideLevel(4, chart)
+                            }
+                            if(e.newLevel == 3){
+                                    //open list
+                            }
+                        }, 100);
                     }
                 }
             }
@@ -176,7 +181,7 @@ export default function SunburstChart(){
     }
 
     function onRender(chart) {
-        sunburst_icon = this.renderer.image('https://www.highcharts.com/samples/graphics/sun.png', 100, 160, 30, 30).add();
+        //sunburst_icon = chart.renderer.image('https://www.highcharts.com/samples/graphics/sun.png', 100, 160, 30, 30).add();
     };
 
     function showLevel(levelId, chart) {
