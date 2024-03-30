@@ -18,7 +18,7 @@ export default function NavBar() {
         </a>
         <a href="/">
           <Image
-            src="/cll.png"
+            src="/climate_action-ai-logo.png"
             alt="Agnes Logo"
             width={290}
             height={60}
