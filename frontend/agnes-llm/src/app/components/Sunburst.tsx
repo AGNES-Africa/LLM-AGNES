@@ -107,6 +107,9 @@ export default function SunburstChart(){
                         else if(e.point.id.split(".").length == 2) {
                             triggerLevel(4, chart)
                         }
+                        else if(e.point.id.split(".").length == 3) {
+                            console.log(e)
+                        }
                     }
                 }
             },
@@ -161,7 +164,8 @@ export default function SunburstChart(){
             breadcrumbs: {
                 showFullPath: false,
                 position:{
-                    align: 'left'
+                    align: 'left',
+                    x: 260
                 },
                 buttonTheme: {
                     fill: '#f7f7f7',
@@ -183,7 +187,7 @@ export default function SunburstChart(){
                                 hideLevel(4, chart)
                             }
                             if(e.newLevel == 3){
-                                    //open list
+                                //console.log(e)
                             }
                         }, 100);
                     }
