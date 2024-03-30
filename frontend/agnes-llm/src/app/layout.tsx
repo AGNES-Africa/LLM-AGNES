@@ -24,7 +24,7 @@ export default function RootLayout({
       <body className="light"> 
         <Providers>
           <div className="bg-img">
-            <Image src="/hope.png" alt="Cover Image" quality="100" layout="fill" fill={true}
+            <Image src="/bg.png" alt="Cover Image" quality="100" layout="fill" fill={true}
               style={{ width: '100%'}}/>
             <Container className='light'>
               <Row className="mt-1">
