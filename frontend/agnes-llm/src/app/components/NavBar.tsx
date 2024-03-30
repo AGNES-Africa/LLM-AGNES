@@ -1,33 +1,40 @@
 import React from "react";
-import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link} from "@nextui-org/react";
+import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button} from "@nextui-org/react";
 import Image from "next/image";
+import {SearchIcon} from './SearchIcon';
 
 export default function NavBar() {
   return (
-    <Navbar>
+    <Navbar className='light'>
       <NavbarBrand>
         <a href="/">
           <Image
-            src="/climate_action-ai-logo.png"
-            alt="Climate Action AI Logo"
-            width={265}
-            height={40}
-            priority
+            src="/agnes-logo.png"
+            alt="Agnes Logo"
+            width={180}
+            height={60}
+            className="mr-4"
+          />
+        </a>
+        <a href="/">
+          <Image
+            src="/cll.png"
+            alt="Agnes Logo"
+            width={290}
+            height={60}
           />
         </a>
       </NavbarBrand>
-      <NavbarContent className="hidden sm:flex gap-6">
-        <NavbarItem isActive>
-          <Link href="/" aria-current="page">
-            Home
-          </Link>
-        </NavbarItem>
-        <NavbarItem>
-          <Link href="#" color="foreground">
-            About
-          </Link>
-        </NavbarItem>
-      </NavbarContent>
+      <NavbarItem>
+        <Button color="primary" size="sm" variant="shadow">
+          Browse Latest Documents
+        </Button>
+      </NavbarItem>
+      <NavbarItem>
+        <Button color="primary" size="sm" variant="shadow" endContent={<SearchIcon/>}>
+          Keyword Search
+        </Button>
+      </NavbarItem>
     </Navbar>
   );
 }

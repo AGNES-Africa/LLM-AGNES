@@ -5,6 +5,7 @@ import {Providers} from "./providers";
 import NavBar from "./components/NavBar";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row, Col } from "reactstrap";
+import Image from "next/image";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
@@ -19,31 +20,20 @@ export default function RootLayout({
 }>) {
 
   return (
-    <html lang="en" suppressHydrationWarning data-bs-theme="dark">
-      <head>
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            try {
-              if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-                document.documentElement.classList.add('dark')
-              } else {
-                document.documentElement.classList.remove('dark')
-              }
-            } catch (_) {}
-          `
-        }}/>
-      </head>
-      <body className="dark"> 
+    <html lang="en" suppressHydrationWarning data-bs-theme="light">
+      <body className="light"> 
         <Providers>
-          <div className="dark">
-            <Container>
-              <Row>
+          <div className="bg-img">
+            <Image src="/hope.png" alt="Cover Image" quality="100" layout="fill" fill={true}
+              style={{ width: '100%'}}/>
+            <Container className='light'>
+              <Row className="mt-1">
                 <NavBar/>
               </Row>
-              <Row>
-                <div className="dark">{children}</div>
+              <Row className="mt-2">
+                {children}
               </Row>
-              </Container>
+            </Container>
           </div>
         </Providers>
       </body>

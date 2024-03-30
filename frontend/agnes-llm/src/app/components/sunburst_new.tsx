@@ -4,6 +4,10 @@ import React, { useState, useEffect, useRef } from 'react';
 import HighchartsReact from 'highcharts-react-official';
 import Highcharts from 'highcharts';
 import HighchartsSunburst from 'highcharts/modules/sunburst';
+import { renderToStaticMarkup } from "react-dom/server";
+import ClimateActionLabel from "./ClimateActionLabel";
+import AgricultureLabel from "./AgricultureLabel";
+import GeneralLabel from "./GeneralLabel";
 
 HighchartsSunburst(Highcharts);
 
@@ -64,10 +68,11 @@ export default function SunburstChart(){
             to: 3
         },
         chart: {
-            height: '50%'
+            height: '55%',
+            backgroundColor: 'transparent'
         },
+        shadow: true,
         colors: ['transparent'].concat(Highcharts.getOptions().colors),
-    
         title: {
             text: ''
         },
@@ -75,18 +80,23 @@ export default function SunburstChart(){
         series: [{
             type: 'sunburst',
             data: data,
+            dataLabels: {
+                useHTML: true,
+                enabled: true,
+                formatter: function () {
+                    if (this.point.name == "Climate Action Streams"){
+                        return renderToStaticMarkup(<ClimateActionLabel name={this.point.name} />);
+                    }
+                    if (this.point.name == "Agriculture"){
+                        return renderToStaticMarkup(<AgricultureLabel name={this.point.name} />);
+                    }
+                    return renderToStaticMarkup(<GeneralLabel name={this.point.name} />);
+                }
+            },
             name: 'Root',
             allowDrillToNode: true,
             borderRadius: 3,
             cursor: 'pointer',
-            dataLabels: {
-                format: '{point.name}',
-                filter: {
-                    property: 'innerArcLength',
-                    operator: '>',
-                    value: 16
-                }
-            },
             point: {
                 events: {
                     click: function(e) {
@@ -145,12 +155,14 @@ export default function SunburstChart(){
             }]
         }],
         tooltip: {
-            headerFormat: '',
-            pointFormat: ''
+            enabled: false
         },
         navigation: {
             breadcrumbs: {
                 showFullPath: false,
+                position:{
+                    align: 'left'
+                },
                 buttonTheme: {
                     fill: '#f7f7f7',
                     padding: 8,
@@ -181,7 +193,7 @@ export default function SunburstChart(){
     }
 
     function onRender(chart) {
-        //sunburst_icon = chart.renderer.image('https://www.highcharts.com/samples/graphics/sun.png', 100, 160, 30, 30).add();
+        //pass
     };
 
     function showLevel(levelId, chart) {
@@ -279,11 +291,12 @@ export default function SunburstChart(){
     }
 
     return (
-          <div>
+          <div className='light'>
             <HighchartsReact
               highcharts={Highcharts}
               options={chartOptions}
               callback = {onRender}
+              webviewStyles={{backgroundColor: 'transparent'}}
             />
           </div>
     )
