@@ -8,6 +8,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import ClimateActionLabel from "./ClimateActionLabel";
 import AgricultureLabel from "./AgricultureLabel";
 import GeneralLabel from "./GeneralLabel";
+import { useRouter } from 'next/navigation';
 
 HighchartsSunburst(Highcharts);
 
@@ -17,6 +18,7 @@ export default function SunburstChart(){
         parent: '',
         name: 'Streams'
     }])
+    const router = useRouter();
 
     let sunburst_icon = null
 
@@ -50,7 +52,9 @@ export default function SunburstChart(){
                             id: (i+1) + "." + (j+1) + "." + (k+1),
                             parent: (i+1) + "." + (j+1),
                             name: (((data[i].children)[j]).children[k]).name,
-                            value: 10
+                            value: (((data[i].children)[j]).children[k]).size,
+                            stream_id: data[i].name == "Agriculture"? 1 : 2,
+                            category_id: (((data[i].children)[j]).children[k]).id
                         })
                     }
                 }
@@ -108,7 +112,8 @@ export default function SunburstChart(){
                             triggerLevel(4, chart)
                         }
                         else if(e.point.id.split(".").length == 3) {
-                            console.log(e)
+                            //console.log(e)
+                            router.push('/category/'+e.point.stream_id+'/'+e.point.category_id);
                         }
                     }
                 }

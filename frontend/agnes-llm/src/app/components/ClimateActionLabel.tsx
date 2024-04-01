@@ -11,7 +11,7 @@ class ClimateActionLabel extends Component {
             height={60}
       />
       <br/>
-      {this.props.name}
+      <h4>{this.props.name}</h4>
     </div>;
   }
 }

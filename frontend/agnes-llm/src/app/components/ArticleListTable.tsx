@@ -1,13 +1,18 @@
-import React from "react";
 import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Tooltip, getKeyValue, Spinner, Button} from "@nextui-org/react";
 import {useAsyncList} from "@react-stately/data";
+import React, { useState } from 'react';
+import { Container, Row, Col } from "reactstrap";
+import Image from "next/image";
 
 export default function ArticleListTable({stream_id,category_id}:any) {
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = useState(true);
+  const [stream, set_stream] = useState("")
+  const [category, set_category] = useState("tt");
+
   const columns = [
-    {name: "NAME", uid: "name"},
-    {name: "CREATED AT", uid: "created_at"},
-    {name: "ACTIONS", uid: "actions"},
+    {name: "Name", uid: "name"},
+    {name: "Created At", uid: "created_at"},
+    {name: "Actions", uid: "actions"},
   ];
 
   let list = useAsyncList({
@@ -17,6 +22,7 @@ export default function ArticleListTable({stream_id,category_id}:any) {
       });
       let json = await res.json();
       setIsLoading(false);
+      set_category(json[0]["category"]);
       return {
         items: json,
       };
@@ -29,7 +35,11 @@ export default function ArticleListTable({stream_id,category_id}:any) {
     switch (columnKey) {
       case "name":
         return (
-          <div className="flex flex-col"><a href={article.url}>{article.name}</a></div>
+          <div className="flex flex-col">
+            <Tooltip content={article.condensed_summary} placement="bottom-end" size="sm">
+            <a href={article.url}>{article.name}</a>
+            </Tooltip>
+          </div>
         );
       case "created_at":
         return (
@@ -41,7 +51,7 @@ export default function ArticleListTable({stream_id,category_id}:any) {
         return (
           <div className="relative flex items-center gap-2">
             <Button color="default" size="sm">
-              View Summary
+              View Detail
             </Button>
             <Button color="primary" size="sm" href={article.url}>
               Visit
@@ -66,43 +76,49 @@ export default function ArticleListTable({stream_id,category_id}:any) {
   }, [page, list.items]);
 
   return (
-    <Table 
-      aria-label="Article List"
-      classNames={{
-        table: "min-h-[300px]",
-      }}
-      bottomContent={
-        <div className="flex w-full justify-center">
-          <Pagination
-            isCompact
-            showControls
-            showShadow
-            color="secondary"
-            page={page}
-            total={pages}
-            onChange={(page) => setPage(page)}
-          />
-        </div>
-      }
-    >
-      <TableHeader columns={columns}>
-        {(column) => (
-          <TableColumn key={column.uid} align={column.uid === "actions" ? "center" : "start"}>
-            {column.name}
-          </TableColumn>
-        )}
-      </TableHeader>
-      <TableBody
-        items={items} 
-        isLoading={isLoading}
-        loadingContent={<Spinner label="Loading..." />}
-      >
-        {(item:any) => (
-          <TableRow key={item.name}>
-            {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
-          </TableRow>
-        )}
-      </TableBody>
-    </Table>
+    <Container className="light">
+      <Row>
+        <div className="light">TESTING</div>
+      </Row>
+      <Row>
+        <Col className="md-6">
+          <Table 
+            aria-label="Article List"
+            bottomContent={
+              <div className="flex w-full justify-center">
+                <Pagination
+                  isCompact
+                  showControls
+                  showShadow
+                  color="secondary"
+                  page={page}
+                  total={pages}
+                  onChange={(page) => setPage(page)}
+                />
+              </div>
+            }
+          >
+            <TableHeader columns={columns}>
+              {(column) => (
+                <TableColumn key={column.uid} align={column.uid === "actions" ? "center" : "start"}>
+                  {column.name}
+                </TableColumn>
+              )}
+            </TableHeader>
+            <TableBody
+              items={items} 
+              isLoading={isLoading}
+              loadingContent={<Spinner label="Loading..." />}
+            >
+              {(item:any) => (
+                <TableRow key={item.name} className="light">
+                  {(columnKey) => <TableCell className="light">{renderCell(item, columnKey)}</TableCell>}
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </Col>
+      </Row>
+    </Container>
   );
 }
