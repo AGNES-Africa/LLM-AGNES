@@ -48,7 +48,6 @@ class Resource(models.Model):
     title = models.CharField(max_length=200)
     name = models.CharField(max_length=200, blank=True, null=True)
     slug = models.SlugField(max_length=255, blank=True, null=True)
-    size = models.IntegerField(default=1)
     negotiation_stream_id = models.ForeignKey(to=NegotiationStream, on_delete=models.DO_NOTHING, related_name="children")
     source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING, related_name="linked")
 
@@ -73,7 +72,6 @@ class Category(models.Model):
     name = models.CharField(max_length=200, blank=True, null=True)
     summary = models.TextField()
     slug = models.SlugField(max_length=255, blank=True, null=True)
-    size = models.IntegerField(default=1)
     source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING,  blank=True, null=True, related_name="children")
     
     class Meta:
@@ -94,14 +92,14 @@ class Category(models.Model):
 
 class Article(models.Model):
     title = models.CharField(max_length=200)
+    condensed_summary = models.TextField(blank=True, null=True)
     summary = models.TextField()
     slug = models.SlugField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField()
     url = models.URLField()
-    size = models.IntegerField(default=1)
     negotiation_stream_id = models.ForeignKey(to=NegotiationStream, on_delete=models.DO_NOTHING)
     source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING)
-    resource_id = models.ForeignKey(to=Resource, on_delete=models.DO_NOTHING, blank=True, null=True)
+    resource_id = models.ForeignKey(to=Resource, on_delete=models.DO_NOTHING, related_name="articles", blank=True, null=True)
     category_id = models.ForeignKey(to=Category, on_delete=models.DO_NOTHING, related_name="children", blank=True, null=True)
     
     class Meta:

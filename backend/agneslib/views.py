@@ -1,8 +1,8 @@
 from django.shortcuts import render
 from django.db.models import Count
 from rest_framework import generics
-from .models import Article, Category, NegotiationStream
-from .serializers import ArticleSerializer, FrontendSerializer#, SourceSerializer, 
+from .models import Article, Category, NegotiationStream, Resource
+from .serializers import ArticleSerializer, ArticleDetailSerializer, FrontendSerializer
 
 class ArticleListAPIView(generics.ListAPIView):
 
@@ -32,7 +32,6 @@ class FrontendGroupView(generics.ListCreateAPIView):
     def get_queryset(self):
         return NegotiationStream.objects.all()
     
-    
 
 class ArticleDetailAPIView(generics.RetrieveAPIView):
 
@@ -41,27 +40,8 @@ class ArticleDetailAPIView(generics.RetrieveAPIView):
     def get_queryset(self):
         queryset = Article.objects.all()
         return queryset
-    
 
-class GenderArticleListAPIView(generics.ListAPIView):
 
-    serializer_class = ArticleSerializer
-    paginate_by = 100
-    
-    def get_queryset(self):
-        queryset = Article.objects.filter(negotiation_stream_id=2)
-        return queryset.order_by("created_at")
-    
-    
-class AgricultureArticleListAPIView(generics.ListAPIView):
-
-    serializer_class = ArticleSerializer
-    paginate_by = 100
-    
-    def get_queryset(self):
-        queryset = Article.objects.filter(negotiation_stream_id=1)
-        return queryset.order_by("created_at")
-    
 # serializer_class = PostSerializer
 #     model = serializer_class.Meta.model
 #     paginate_by = 100
