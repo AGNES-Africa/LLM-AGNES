@@ -3,7 +3,7 @@ import React, { Component } from "react";
 class GeneralLabel extends Component {
   render() {
     return <div>
-      <h4>{this.props.name}</h4>
+      <h6>{this.props.name}</h6>
     </div>;
   }
 }

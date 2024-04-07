@@ -11,7 +11,7 @@ class AgricultureLabel extends Component {
             height={60}
       />
       <br/>
-      <h4>{this.props.name}</h4>
+      <h6>{this.props.name}</h6>
     </div>;
   }
 }
