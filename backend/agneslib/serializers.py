@@ -24,8 +24,8 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Article
-        fields = ["name","condensed_summary","category","negotiation_stream",
-                  "created_at","url"]
+        fields = ["name","condensed_summary","category","negotiation_stream", "negotiation_stream_id",
+                  "negotiation_stream","created_at","url"]
 
 class CategorySerializer(serializers.ModelSerializer):
 
