@@ -9,6 +9,7 @@ import ClimateActionLabel from "./ClimateActionLabel";
 import AgricultureLabel from "./AgricultureLabel";
 import GeneralLabel from "./GeneralLabel";
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation'
 
 HighchartsSunburst(Highcharts);
 
@@ -20,9 +21,9 @@ export default function SunburstChart(){
     }])
     const router = useRouter();
 
-    let sunburst_icon = null
-
-    const sunburstDiv = useRef(null);
+    const searchParams = useSearchParams()
+    const stream_to_nav = searchParams.get('stream_id') // Logs "search"
+    
 
     useEffect(() => {
         fetch('http://localhost:8000/api/db_hierarchy')
@@ -105,7 +106,15 @@ export default function SunburstChart(){
                 events: {
                     click: function(e) {
                         var chart = this.series.chart;
+                        console.log(chart)
                         if((e.point.id == '1') || (e.point.id == '2') || (e.point.id == '3') || (e.point.id == '4')){
+                            if (stream_to_nav === '1'){
+                                setTimeout(function () {
+                                    showLevel(1, chart)
+                                    var levels = chart.userOptions.series[0].levels
+                                    console.log(levels)
+                                },200)
+                            }
                             triggerLevel(3, chart)
                         }
                         else if(e.point.id.split(".").length == 2) {
@@ -170,7 +179,7 @@ export default function SunburstChart(){
                 showFullPath: false,
                 position:{
                     align: 'left',
-                    x: 260
+                    x: 225
                 },
                 buttonTheme: {
                     fill: '#f7f7f7',
@@ -181,6 +190,7 @@ export default function SunburstChart(){
                 events: {
                     click: function(e,br) {
                         var chart = this.chart;
+                        console.log(chart)
                         setTimeout(function () {
                             if(e.newLevel == 1){
                                 showLevel(2, chart)
@@ -202,85 +212,74 @@ export default function SunburstChart(){
     }
 
     function onRender(chart) {
-        //pass
+        if (stream_to_nav === '1'){
+            setTimeout(function () {
+                showLevel(3, chart)
+                triggerLevel(1, chart)
+                if (chart.hasOwnProperty('series')){
+                    var series = chart.series[0];
+                    series.points[16].setVisible(false);
+                    series.points[17].setVisible(false);
+                    series.points[18].setVisible(false);
+                    series.points[16].value=0;
+                    series.points[17].value=0;
+                    series.points[18].value=0;
+                    console.log(series)
+                    series.chart.redraw()
+                }
+
+            }, 200)
+            
+            console.log("hrere")
+        }
+        
+        
     };
 
     function showLevel(levelId, chart) {
-        var id = levelId 
-        var levels = chart.userOptions.series[0].levels // Whole levels object
-        var level = levels.filter(elem => { // Find level to hide
-            return elem.level === levelId
-        })
-        var index = levels.indexOf(level[0]) // Get index of level
-        var newLevelOptions;
-        
-        level[0].hidden = false // set flag
-        newLevelOptions = Object.assign({}, level[0], { // Merge specific level options
-            levelSize: {
-                value: 1
-            },
-            dataLabels: Object.assign({}, level[0].dataLabels, {
-                enabled: true
-            })
-        })
-        
-        levels[index] = newLevelOptions // Assign new options
-        
-        chart.series[0].update({ // Update chart levels
-            levels: levels
-        })
+        var id = levelId
+
+        if (chart.hasOwnProperty('userOptions')){
+            if (chart.userOptions.hasOwnProperty("series")){
+                var levels = chart.userOptions.series[0].levels // Whole levels object
+                var level = levels.filter(elem => { // Find level to hide
+                    return elem.level === levelId
+                })
+                var index = levels.indexOf(level[0]) // Get index of level
+                var newLevelOptions;
+                
+                level[0].hidden = false // set flag
+                newLevelOptions = Object.assign({}, level[0], { // Merge specific level options
+                    levelSize: {
+                        value: 1
+                    },
+                    dataLabels: Object.assign({}, level[0].dataLabels, {
+                        enabled: true
+                    })
+                })
+                
+                levels[index] = newLevelOptions // Assign new options
+                
+                chart.series[0].update({ // Update chart levels
+                    levels: levels
+                })
+            }
+        }
     }
 
     function hideLevel(levelId, chart) {
         //console.log(levelId)
         //console.log(chart)
         var id = levelId // Level that you want to hide
-        var levels = chart.userOptions.series[0].levels // Whole levels object
-        var level = levels.filter(elem => { // Find level to hide
-            return elem.level === levelId
-        })
-        var index = levels.indexOf(level[0]) // Get index of level to hide
-        var newLevelOptions;
-        
-        level[0].hidden = true // set flag
-        newLevelOptions = Object.assign({}, level[0], {
-            levelSize: {
-                value: 0
-            },
-            dataLabels: Object.assign({}, level[0].dataLabels, {
-                enabled: false
-            })
-        })
-        
-        levels[index] = newLevelOptions // Assign new options
-        chart.series[0].update({ // Update chart levels
-            levels: levels
-        })
-    }
-      
-    function triggerLevel(levelId, chart, alternate=true) {
-        //console.log(levelId)
-        //console.log(chart)
-        var id = levelId // Level that you want to hide
-        var levels = chart.userOptions.series[0].levels // Whole levels object
-        var level = levels.filter(elem => { // Find level to hide
-            return elem.level === levelId
-        })
-        var index = levels.indexOf(level[0]) // Get index of level to hide
-        var newLevelOptions;
-        
-        if (level[0].hidden) { // if level is hidden
-            level[0].hidden = false // set flag
-            newLevelOptions = Object.assign({}, level[0], { // Merge specific level options
-                levelSize: {
-                    value: 1
-                },
-                dataLabels: Object.assign({}, level[0].dataLabels, {
-                    enabled: true
+        if (chart.hasOwnProperty('userOptions')){
+            if (chart.userOptions.hasOwnProperty("series")){
+                var levels = chart.userOptions.series[0].levels // Whole levels object
+                var level = levels.filter(elem => { // Find level to hide
+                    return elem.level === levelId
                 })
-            })
-        } else { // If level is visible
-            if (alternate){
+                var index = levels.indexOf(level[0]) // Get index of level to hide
+                var newLevelOptions;
+                
                 level[0].hidden = true // set flag
                 newLevelOptions = Object.assign({}, level[0], {
                     levelSize: {
@@ -290,13 +289,60 @@ export default function SunburstChart(){
                         enabled: false
                     })
                 })
+                
+                levels[index] = newLevelOptions // Assign new options
+                chart.series[0].update({ // Update chart levels
+                    levels: levels
+                })
             }
         }
+    }
+      
+    function triggerLevel(levelId, chart, alternate=true) {
+        //console.log(levelId)
+        //console.log(chart)
+        var id = levelId // Level that you want to hide
+
+        if (chart.hasOwnProperty('userOptions')){
+            if (chart.userOptions.hasOwnProperty("series")){
         
-        levels[index] = newLevelOptions // Assign new options
-        chart.series[0].update({ // Update chart levels
-            levels: levels
-        })
+                var levels = chart.userOptions.series[0].levels // Whole levels object
+                var level = levels.filter(elem => { // Find level to hide
+                    return elem.level === levelId
+                })
+                var index = levels.indexOf(level[0]) // Get index of level to hide
+                var newLevelOptions;
+                
+                if (level[0].hidden) { // if level is hidden
+                    level[0].hidden = false // set flag
+                    newLevelOptions = Object.assign({}, level[0], { // Merge specific level options
+                        levelSize: {
+                            value: 1
+                        },
+                        dataLabels: Object.assign({}, level[0].dataLabels, {
+                            enabled: true
+                        })
+                    })
+                } else { // If level is visible
+                    if (alternate){
+                        level[0].hidden = true // set flag
+                        newLevelOptions = Object.assign({}, level[0], {
+                            levelSize: {
+                                value: 0
+                            },
+                            dataLabels: Object.assign({}, level[0].dataLabels, {
+                                enabled: false
+                            })
+                        })
+                    }
+                }
+                
+                levels[index] = newLevelOptions // Assign new options
+                chart.series[0].update({ // Update chart levels
+                    levels: levels
+                })
+            }
+        }
     }
 
     return (
