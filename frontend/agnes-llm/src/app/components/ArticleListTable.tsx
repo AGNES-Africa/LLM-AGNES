@@ -1,19 +1,35 @@
-import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Tooltip, getKeyValue, Spinner, Button} from "@nextui-org/react";
+import {Table, TableHeader, TableColumn, TableBody, TableRow, TableCell, Pagination, Input, Spinner, Button} from "@nextui-org/react";
 import {useAsyncList} from "@react-stately/data";
 import React, { useState } from 'react';
 import { Container, Row, Col } from "reactstrap";
-import Image from "next/image";
+import { Accordion, AccordionItem } from "@nextui-org/accordion";
+import Link from 'next/link';
+import {SearchIcon} from './SearchIcon';
 
 export default function ArticleListTable({stream_id,category_id}:any) {
   const [isLoading, setIsLoading] = useState(true);
-  const [stream, set_stream] = useState("")
-  const [category, set_category] = useState("tt");
-
-  const columns = [
-    {name: "Name", uid: "name"},
-    {name: "Created At", uid: "created_at"},
+  const [filterValue, setFilterValue] = React.useState("");
+  const [columns, setColumns] = useState([
+    {name: "Publication", uid: "name"},
+    {name: "Created at", uid: "created_at"},
     {name: "Actions", uid: "actions"},
-  ];
+  ]);
+  
+  const [stream, setStream] = React.useState("");
+  const [resource, setResource] = React.useState("");
+  const [category, setCategory] = React.useState("")
+  const [rowsPerPage, setRowsPerPage] = React.useState(3);
+  const [page, setPage] = React.useState(1);
+
+  const hasSearchFilter = Boolean(filterValue);
+
+  const itemClasses = {
+    base: "py-0 w-full",
+    title: "font-bold text-small",
+    trigger: "px-2 py-0 data-[hover=true]:bg-default-100 rounded-lg h-10 flex items-center",
+    indicator: "text-small",
+    content: "light px-2",
+  };
 
   let list = useAsyncList({
     async load({signal}) {
@@ -22,12 +38,154 @@ export default function ArticleListTable({stream_id,category_id}:any) {
       });
       let json = await res.json();
       setIsLoading(false);
-      set_category(json[0]["category"]);
+      setStream(json[0]["negotiation_stream"])
+      setResource(json[0]["category"].split("-")[0] + "Resources");
+      setCategory(json[0]["category"].split("-")[1])
       return {
         items: json,
       };
-    }
+    },
+    async sort({items, sortDescriptor}) {
+      return {
+        items: items.sort((a, b) => {
+          let first = a[sortDescriptor.column];
+          let second = b[sortDescriptor.column];
+          let cmp = (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1;
+
+          if (sortDescriptor.direction === "descending") {
+            cmp *= -1;
+          }
+
+          return cmp;
+        }),
+      };
+    },
   });
+
+  const filteredItems = React.useMemo(() => {
+    let filteredArticles = [...list.items];
+
+    if (hasSearchFilter) {
+      filteredArticles = filteredArticles.filter((article) =>
+        article.condensed_summary.toLowerCase().includes(filterValue.toLowerCase()) ||
+        article.name.toLowerCase().includes(filterValue.toLowerCase())
+      );
+    }
+
+    return filteredArticles;
+  }, [list.items, filterValue]);
+
+  const pages = Math.ceil(list.items.length / rowsPerPage);
+
+  const items = React.useMemo(() => {
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    return filteredItems.slice(start, end);
+  }, [page, filteredItems, rowsPerPage]);
+
+
+  const onRowsPerPageChange = React.useCallback((e) => {
+    setRowsPerPage(Number(e.target.value));
+    setPage(1);
+  }, []);
+
+
+  const onSearchChange = React.useCallback((value) => {
+    if (value) {
+      setFilterValue(value);
+      setPage(1);
+    } else {
+      setFilterValue("");
+    }
+  }, []);
+
+
+  const topContent = React.useMemo(() => {
+    return (
+      <div>
+        <nav className="breadcrumbs">
+          <Link href={{
+            pathname: '/',
+            query: {
+              stream_id: stream_id
+            }
+          }} className="breadcrumbs__item">
+            ← {stream}
+          </Link>
+          <Link href={{
+            pathname: '/',
+            query: {
+              stream_id: stream_id,
+              resource: resource
+            }
+          }} className="breadcrumbs__item">
+            ← {resource}
+          </Link>
+          <a className="breadcrumbs__item is-active">{category}</a> 
+        </nav>
+        <div>
+          <Input
+            isClearable
+            classNames={{
+              base: "w-full sm:max-w-[44%]",
+              inputWrapper: "border-1",
+            }}
+            placeholder="Search by summary text..."
+            size="sm"
+            startContent={<SearchIcon className="text-default-300" />}
+            value={filterValue}
+            variant="bordered"
+            onClear={() => setFilterValue("")}
+            onValueChange={onSearchChange}
+          />
+        </div>
+      </div>
+    );
+  }, [
+    filterValue,
+    onSearchChange,
+    onRowsPerPageChange,
+    list.items.length,
+    hasSearchFilter,
+  ]);
+
+
+  const bottomContent = React.useMemo(() => {
+    return (
+      <div>
+      <div className="flex justify-between items-center">
+        <label className="flex items-center text-default-400 text-small">
+          Rows per page:
+          <select
+            className="bg-transparent outline-none text-default-400 text-small"
+            onChange={onRowsPerPageChange}
+          >
+            <option value="3">3</option>
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+          </select>
+        </label>
+      </div>
+      <div className="py-2 px-2 flex justify-between items-center">
+        <Pagination
+          showControls
+          classNames={{
+            cursor: "bg-foreground text-background",
+          }}
+          color="default"
+          isDisabled={hasSearchFilter}
+          page={page}
+          total={pages}
+          variant="light"
+          onChange={setPage}
+        />
+      </div>
+      </div>
+    );
+  }, [list.items.length, page, pages, hasSearchFilter]);
+
 
   const renderCell = React.useCallback((article:any, columnKey:any) => {
     const cellValue = article[columnKey];
@@ -36,9 +194,9 @@ export default function ArticleListTable({stream_id,category_id}:any) {
       case "name":
         return (
           <div className="flex flex-col">
-            <Tooltip content={article.condensed_summary} placement="bottom-end" size="sm">
-            <a href={article.url}>{article.name}</a>
-            </Tooltip>
+            <Accordion isCompact defaultExpandedKeys={["item"]} itemClasses={itemClasses}>
+              <AccordionItem key="item" title={article.name} className="light">{article.condensed_summary}</AccordionItem>
+            </Accordion>
           </div>
         );
       case "created_at":
@@ -53,7 +211,13 @@ export default function ArticleListTable({stream_id,category_id}:any) {
             <Button color="default" size="sm">
               View Detail
             </Button>
-            <Button color="primary" size="sm" href={article.url}>
+            <Button 
+              color="primary" 
+              size="sm" 
+              href={article.url}
+              as={Link}
+              variant="solid"
+            >
               Visit
             </Button>
           </div>
@@ -63,44 +227,25 @@ export default function ArticleListTable({stream_id,category_id}:any) {
     }
   }, []);
 
-  const [page, setPage] = React.useState(1);
-  const rowsPerPage = 5;
-
-  const pages = Math.ceil(list.items.length / rowsPerPage);
-
-  const items = React.useMemo(() => {
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-
-    return list.items.slice(start, end);
-  }, [page, list.items]);
-
   return (
     <Container className="light">
-      <Row>
-        <div className="light">TESTING</div>
-      </Row>
-      <Row>
+      <Row className="mt-6">
         <Col className="md-6">
           <Table 
             aria-label="Article List"
-            bottomContent={
-              <div className="flex w-full justify-center">
-                <Pagination
-                  isCompact
-                  showControls
-                  showShadow
-                  color="secondary"
-                  page={page}
-                  total={pages}
-                  onChange={(page) => setPage(page)}
-                />
-              </div>
-            }
+            title="Article List"
+            sortDescriptor={list.sortDescriptor}
+            onSortChange={list.sort}
+            bottomContent={bottomContent}
+            topContent={topContent}
           >
             <TableHeader columns={columns}>
               {(column) => (
-                <TableColumn key={column.uid} align={column.uid === "actions" ? "center" : "start"}>
+                <TableColumn 
+                  key={column.uid} 
+                  align={column.uid === "actions" ? "center" : "start"} 
+                  allowsSorting = {column.uid === "created_at" ? true : false}
+                >
                   {column.name}
                 </TableColumn>
               )}
@@ -112,7 +257,7 @@ export default function ArticleListTable({stream_id,category_id}:any) {
             >
               {(item:any) => (
                 <TableRow key={item.name} className="light">
-                  {(columnKey) => <TableCell className="light">{renderCell(item, columnKey)}</TableCell>}
+                  {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                 </TableRow>
               )}
             </TableBody>
