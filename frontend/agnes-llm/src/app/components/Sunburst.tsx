@@ -14,6 +14,7 @@ import { useSearchParams } from 'next/navigation'
 HighchartsSunburst(Highcharts);
 
 export default function SunburstChart(){
+    window.sunburst_events = {}
     const [data, set_data] = useState([{
         id: '0.0',
         parent: '',
@@ -21,8 +22,8 @@ export default function SunburstChart(){
     }])
     const router = useRouter();
 
-    const searchParams = useSearchParams()
-    const stream_to_nav = searchParams.get('stream_id') // Logs "search"
+    const search_params = useSearchParams()
+    const root_node = search_params.get('back_link') // Logs "search"
     
 
     useEffect(() => {
@@ -105,24 +106,16 @@ export default function SunburstChart(){
             point: {
                 events: {
                     click: function(e) {
-                        var chart = this.series.chart;
-                        console.log(chart)
+                        var chart = this.series.chart
+                        window.sunburst_events[e.point.id] = e
                         if((e.point.id == '1') || (e.point.id == '2') || (e.point.id == '3') || (e.point.id == '4')){
-                            if (stream_to_nav === '1'){
-                                setTimeout(function () {
-                                    showLevel(1, chart)
-                                    var levels = chart.userOptions.series[0].levels
-                                    console.log(levels)
-                                },200)
-                            }
                             triggerLevel(3, chart)
                         }
                         else if(e.point.id.split(".").length == 2) {
                             triggerLevel(4, chart)
                         }
                         else if(e.point.id.split(".").length == 3) {
-                            //console.log(e)
-                            router.push('/category/'+e.point.stream_id+'/'+e.point.category_id);
+                            router.push('/category/'+e.point.stream_id+'/'+e.point.category_id+'/'+e.point.id);
                         }
                     }
                 }
@@ -190,7 +183,6 @@ export default function SunburstChart(){
                 events: {
                     click: function(e,br) {
                         var chart = this.chart;
-                        console.log(chart)
                         setTimeout(function () {
                             if(e.newLevel == 1){
                                 showLevel(2, chart)
@@ -202,7 +194,6 @@ export default function SunburstChart(){
                                 hideLevel(4, chart)
                             }
                             if(e.newLevel == 3){
-                                //console.log(e)
                             }
                         }, 100);
                     }
@@ -212,28 +203,23 @@ export default function SunburstChart(){
     }
 
     function onRender(chart) {
-        if (stream_to_nav === '1'){
+        if(root_node != null){
             setTimeout(function () {
-                showLevel(3, chart)
-                triggerLevel(1, chart)
                 if (chart.hasOwnProperty('series')){
                     var series = chart.series[0];
-                    series.points[16].setVisible(false);
-                    series.points[17].setVisible(false);
-                    series.points[18].setVisible(false);
-                    series.points[16].value=0;
-                    series.points[17].value=0;
-                    series.points[18].value=0;
-                    console.log(series)
-                    series.chart.redraw()
+                    if ((root_node === '1') || (root_node === '2')){
+                        series.setRootNode(root_node)
+                        showLevel(3, chart)
+                    }
+                    else{
+                        series.setRootNode(root_node)
+                        showLevel(3, chart)
+                        showLevel(4, chart)
+                    }
                 }
-
+                
             }, 200)
-            
-            console.log("hrere")
         }
-        
-        
     };
 
     function showLevel(levelId, chart) {
@@ -268,8 +254,6 @@ export default function SunburstChart(){
     }
 
     function hideLevel(levelId, chart) {
-        //console.log(levelId)
-        //console.log(chart)
         var id = levelId // Level that you want to hide
         if (chart.hasOwnProperty('userOptions')){
             if (chart.userOptions.hasOwnProperty("series")){
@@ -299,8 +283,6 @@ export default function SunburstChart(){
     }
       
     function triggerLevel(levelId, chart, alternate=true) {
-        //console.log(levelId)
-        //console.log(chart)
         var id = levelId // Level that you want to hide
 
         if (chart.hasOwnProperty('userOptions')){

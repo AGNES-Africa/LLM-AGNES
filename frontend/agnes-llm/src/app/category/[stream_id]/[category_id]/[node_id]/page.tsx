@@ -1,5 +1,5 @@
 "use client"
-import ArticleListTable from "../../../components/ArticleListTable";
+import ArticleListTable from "../../../../components/ArticleListTable";
 
 export default function ArticleList({params}:any) {
   return(
@@ -7,6 +7,7 @@ export default function ArticleList({params}:any) {
       <ArticleListTable
         stream_id={params.stream_id}
         category_id={params.category_id}
+        node_id={params.node_id}
       />
     </div>
   )

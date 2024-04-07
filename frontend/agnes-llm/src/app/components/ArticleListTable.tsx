@@ -6,7 +6,7 @@ import { Accordion, AccordionItem } from "@nextui-org/accordion";
 import Link from 'next/link';
 import {SearchIcon} from './SearchIcon';
 
-export default function ArticleListTable({stream_id,category_id}:any) {
+export default function ArticleListTable({stream_id,category_id,node_id}:any) {
   const [isLoading, setIsLoading] = useState(true);
   const [filterValue, setFilterValue] = React.useState("");
   const [columns, setColumns] = useState([
@@ -14,6 +14,10 @@ export default function ArticleListTable({stream_id,category_id}:any) {
     {name: "Created at", uid: "created_at"},
     {name: "Actions", uid: "actions"},
   ]);
+
+  const back_link_arr = node_id.split(".")
+  back_link_arr.pop()
+  const back_link = back_link_arr.join(".")
   
   const [stream, setStream] = React.useState("");
   const [resource, setResource] = React.useState("");
@@ -108,7 +112,7 @@ export default function ArticleListTable({stream_id,category_id}:any) {
           <Link href={{
             pathname: '/',
             query: {
-              stream_id: stream_id
+              back_link: stream_id
             }
           }} className="breadcrumbs__item">
             ← {stream}
@@ -116,8 +120,7 @@ export default function ArticleListTable({stream_id,category_id}:any) {
           <Link href={{
             pathname: '/',
             query: {
-              stream_id: stream_id,
-              resource: resource
+              back_link: back_link
             }
           }} className="breadcrumbs__item">
             ← {resource}
