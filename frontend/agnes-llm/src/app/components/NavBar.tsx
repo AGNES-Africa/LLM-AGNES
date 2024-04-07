@@ -26,7 +26,9 @@ export default function NavBar() {
         </a>
       </NavbarBrand>
       <NavbarItem>
-        <Button color="primary" size="sm" variant="shadow">
+        <Button color="primary" size="sm" variant="shadow"
+          href="/latest_articles"
+          as={Link}>
           Browse Latest Documents
         </Button>
       </NavbarItem>
