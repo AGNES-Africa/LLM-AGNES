@@ -34,6 +34,14 @@ body {
 	z-index: 1;
 }
 
+.fontsmall {
+	font-size:13px!important;
+}
+
+.fontsmaller {
+	font-size:12px!important;
+}
+
 .dark-mode {
   background-color: #000 !important;
 }

@@ -133,6 +133,9 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
             classNames={{
               base: "w-full sm:max-w-[44%]",
               inputWrapper: "border-1",
+              input: [
+                "fontsmall",
+              ],
             }}
             placeholder="Search by summary text..."
             size="sm"
@@ -198,14 +201,14 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
         return (
           <div className="flex flex-col">
             <Accordion isCompact defaultExpandedKeys={["item"]} itemClasses={itemClasses}>
-              <AccordionItem key="item" title={article.name} className="light">{article.condensed_summary}</AccordionItem>
+              <AccordionItem key="item" title={article.name} className="fontsmall">{article.condensed_summary}</AccordionItem>
             </Accordion>
           </div>
         );
       case "created_at":
         return (
           <div className="flex flex-col">
-            <p className="text-bold text-sm">{article.created_at}</p>
+            <p className="text-bold text-sm fontsmall">{article.created_at}</p>
           </div>
         );
       case "actions":
