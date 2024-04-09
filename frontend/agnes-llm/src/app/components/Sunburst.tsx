@@ -14,7 +14,6 @@ import { useSearchParams } from 'next/navigation'
 HighchartsSunburst(Highcharts);
 
 export default function SunburstChart(){
-    window.sunburst_events = {}
     const [data, set_data] = useState([{
         id: '0.0',
         parent: '',
@@ -107,7 +106,6 @@ export default function SunburstChart(){
                 events: {
                     click: function(e) {
                         var chart = this.series.chart
-                        window.sunburst_events[e.point.id] = e
                         if((e.point.id == '1') || (e.point.id == '2') || (e.point.id == '3') || (e.point.id == '4')){
                             triggerLevel(3, chart)
                         }
