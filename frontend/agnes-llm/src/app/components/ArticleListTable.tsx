@@ -214,7 +214,12 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
       case "actions":
         return (
           <div className="relative flex items-center gap-2">
-            <Button color="default" size="sm">
+            <Button 
+              color="default" 
+              size="sm"
+              href={"/article/"+article.id}
+              as={Link}
+            >
               View Detail
             </Button>
             <Button 
@@ -237,7 +242,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
     <Container className="light">
       <Row className="mt-6">
         <Col className="md-6">
-          <Table 
+          <Table className="max-w-[1200px] center"
             aria-label="Article List"
             title="Article List"
             sortDescriptor={list.sortDescriptor}

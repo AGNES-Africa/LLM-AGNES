@@ -17,6 +17,7 @@ class ArticleDetailSerializer(serializers.ModelSerializer):
                   "created_at","url"]
 
 class ArticleSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField()
     name = serializers.CharField(source="title")
     category = serializers.CharField(read_only=True, source="category_id")
     negotiation_stream = serializers.CharField(read_only=True, source="negotiation_stream_id")
@@ -24,7 +25,7 @@ class ArticleSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Article
-        fields = ["name","condensed_summary","category","negotiation_stream", "negotiation_stream_id",
+        fields = ["id","name","condensed_summary","category","negotiation_stream", "negotiation_stream_id",
                   "negotiation_stream","created_at","url"]
 
 class CategorySerializer(serializers.ModelSerializer):

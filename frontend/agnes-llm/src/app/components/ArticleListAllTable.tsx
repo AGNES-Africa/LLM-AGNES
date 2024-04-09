@@ -222,7 +222,12 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
       case "actions":
         return (
           <div className="relative flex items-center gap-2">
-            <Button color="default" size="sm">
+            <Button 
+              color="default" 
+              size="sm"
+              href={"/article_detail/"+article.id}
+              as={Link}
+            >
               View Detail
             </Button>
             <Button 

@@ -4,7 +4,7 @@ import { Container, Row, Col } from "reactstrap";
 import Link from 'next/link';
 import { useRouter } from 'next/navigation'
 
-export default function ArticleView({article_id}:any) {
+export default function ArticleDetailView({article_id}:any) {
   const [data, set_data] = useState({
     name: "",
     condensed_summary: "",
@@ -32,16 +32,8 @@ export default function ArticleView({article_id}:any) {
                 <Row>
                   <Col>
                     <nav className="breadcrumbs">
-                      <Link href={{
-                        pathname: '/',
-                        query: {
-                          back_link: data.negotiation_stream_id
-                        }
-                      }} className="breadcrumbs__item">
-                        ← {data.negotiation_stream}
-                      </Link>
                       <a onClick={() => router.back()} className="breadcrumbs__item">
-                        ← {data.category}
+                        ← Back
                       </a>
                     </nav>
                   </Col>

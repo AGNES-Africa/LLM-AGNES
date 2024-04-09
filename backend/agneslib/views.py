@@ -35,7 +35,7 @@ class FrontendGroupView(generics.ListCreateAPIView):
 
 class ArticleDetailAPIView(generics.RetrieveAPIView):
 
-    serializer_class = ArticleSerializer
+    serializer_class = ArticleDetailSerializer
 
     def get_queryset(self):
         queryset = Article.objects.all()
