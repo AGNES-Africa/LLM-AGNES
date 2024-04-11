@@ -23,13 +23,14 @@ export default function SunburstChart(){
 
     const search_params = useSearchParams()
     const root_node = search_params.get('back_link') // Logs "search"
-    
+    const highcharts_colors:any = Highcharts.getOptions().colors
 
     useEffect(() => {
+        
         fetch('http://localhost:8000/api/db_hierarchy')
           .then((res) => res.json())
           .then((data:any) => {
-            let arr = [{
+            let arr:any = [{
                 id: '0',
                 parent: '',
                 name: 'Climate Action Streams'
@@ -64,7 +65,7 @@ export default function SunburstChart(){
         })
     }, []);
 
-    const chartOptions = {
+    const chartOptions:any = {
         credits: {
             enabled: false
         },
@@ -77,7 +78,7 @@ export default function SunburstChart(){
             backgroundColor: 'transparent'
         },
         shadow: true,
-        colors: ['transparent'].concat(Highcharts.getOptions().colors),
+        colors: ['transparent'].concat(highcharts_colors),
         title: {
             text: ''
         },
@@ -88,7 +89,7 @@ export default function SunburstChart(){
             dataLabels: {
                 useHTML: true,
                 enabled: true,
-                formatter: function () {
+                formatter: function (this:any) {
                     if (this.point.name == "Climate Action Streams"){
                         return renderToStaticMarkup(<ClimateActionLabel name={this.point.name} />);
                     }
@@ -104,8 +105,8 @@ export default function SunburstChart(){
             cursor: 'pointer',
             point: {
                 events: {
-                    click: function(e) {
-                        var chart = this.series.chart
+                    click: function(e:any) {
+                        var chart = e.point.series.chart
                         if((e.point.id == '1') || (e.point.id == '2') || (e.point.id == '3') || (e.point.id == '4')){
                             triggerLevel(3, chart)
                         }
@@ -179,19 +180,19 @@ export default function SunburstChart(){
                     'stroke-width': 1
                 },
                 events: {
-                    click: function(e,br) {
-                        var chart = this.chart;
+                    click: function(br:any, e:any) {
+                        var chart = e.levelOptions.point.series.chart;
                         setTimeout(function () {
-                            if(e.newLevel == 1){
+                            if(br.newLevel == 1){
                                 showLevel(2, chart)
                                 hideLevel(3, chart)
                                 hideLevel(4, chart)
                             }
-                            if(e.newLevel == 2){
+                            if(br.newLevel == 2){
                                 showLevel(3, chart)
                                 hideLevel(4, chart)
                             }
-                            if(e.newLevel == 3){
+                            if(br.newLevel == 3){
                             }
                         }, 100);
                     }
@@ -200,7 +201,7 @@ export default function SunburstChart(){
         }
     }
 
-    function onRender(chart) {
+    function onRender(chart:any) {
         if(root_node != null){
             setTimeout(function () {
                 if (chart.hasOwnProperty('series')){
@@ -220,13 +221,13 @@ export default function SunburstChart(){
         }
     };
 
-    function showLevel(levelId, chart) {
+    function showLevel(levelId:any, chart:any) {
         var id = levelId
 
         if (chart.hasOwnProperty('userOptions')){
             if (chart.userOptions.hasOwnProperty("series")){
                 var levels = chart.userOptions.series[0].levels // Whole levels object
-                var level = levels.filter(elem => { // Find level to hide
+                var level = levels.filter((elem: { level: any; }) => { // Find level to hide
                     return elem.level === levelId
                 })
                 var index = levels.indexOf(level[0]) // Get index of level
@@ -251,12 +252,12 @@ export default function SunburstChart(){
         }
     }
 
-    function hideLevel(levelId, chart) {
+    function hideLevel(levelId:any, chart:any) {
         var id = levelId // Level that you want to hide
         if (chart.hasOwnProperty('userOptions')){
             if (chart.userOptions.hasOwnProperty("series")){
                 var levels = chart.userOptions.series[0].levels // Whole levels object
-                var level = levels.filter(elem => { // Find level to hide
+                var level = levels.filter((elem: { level: any; }) => { // Find level to hide
                     return elem.level === levelId
                 })
                 var index = levels.indexOf(level[0]) // Get index of level to hide
@@ -280,14 +281,14 @@ export default function SunburstChart(){
         }
     }
       
-    function triggerLevel(levelId, chart, alternate=true) {
+    function triggerLevel(levelId:any, chart:any, alternate=true) {
         var id = levelId // Level that you want to hide
 
         if (chart.hasOwnProperty('userOptions')){
             if (chart.userOptions.hasOwnProperty("series")){
         
                 var levels = chart.userOptions.series[0].levels // Whole levels object
-                var level = levels.filter(elem => { // Find level to hide
+                var level = levels.filter((elem: { level: any; }) => { // Find level to hide
                     return elem.level === levelId
                 })
                 var index = levels.indexOf(level[0]) // Get index of level to hide
