@@ -27,7 +27,12 @@ export default function SunburstChart(){
 
     useEffect(() => {
         
-        fetch('http://localhost:8000/api/db_hierarchy')
+        fetch('http://localhost:8000/api/db_hierarchy', {
+            method: "GET",
+            headers: {
+              accept: "application/json",
+            },
+          })
           .then((res) => res.json())
           .then((data:any) => {
             let arr:any = [{
