@@ -37,7 +37,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
 
   let list = useAsyncList({
     async load({signal}) {
-      let res = await fetch('http://localhost:8000/api/category/'+stream_id+'/'+category_id, {
+      let res = await fetch('https://agnes-llm-backend.azurewebsites.net/api/category/'+stream_id+'/'+category_id, {
         signal,
       });
       let json = await res.json();

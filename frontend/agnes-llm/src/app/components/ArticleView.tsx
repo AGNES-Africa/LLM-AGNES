@@ -19,7 +19,7 @@ export default function ArticleView({article_id}:any) {
   const router = useRouter();
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/article/'+article_id)
+    fetch('https://agnes-llm-backend.azurewebsites.net/api/article/'+article_id)
       .then((res) => res.json())
       .then((data:any) => {
         set_data(data)

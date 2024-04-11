@@ -1,4 +1,8 @@
-import SunburstChart from './components/Sunburst'
+import dynamic from 'next/dynamic'
+ 
+const SunburstChart = dynamic(() => import('./components/Sunburst'), {
+  ssr: false,
+})
 
 export default function Home() {
   return (
@@ -7,3 +11,4 @@ export default function Home() {
       </div>
   );
 }
+

@@ -27,7 +27,7 @@ export default function SunburstChart(){
 
     useEffect(() => {
         const fetchData = async () => {
-            const data = await fetch('http://localhost:8000/api/db_hierarchy', {
+            const data = await fetch('https://agnes-llm-backend.azurewebsites.net/api/db_hierarchy', {
                 method: "GET",
                 headers: {
                     accept: "application/json",
@@ -68,7 +68,7 @@ export default function SunburstChart(){
                 }
                 set_data(arr)
             })
-            return data
+        return data
         }
         fetchData();
     }, []);
@@ -83,7 +83,21 @@ export default function SunburstChart(){
         },
         chart: {
             height: '55%',
-            backgroundColor: 'transparent'
+            backgroundColor: 'transparent',
+            events: {
+                load(this, e:any) {
+                    //e.preventDefault()
+                    console.log("load")
+                },
+                redraw(this, e:any) {
+                    //e.preventDefault()
+                    console.log("redraw")
+                },
+                render(this, e:any) {
+                    //e.preventDefault()
+                    console.log("render")
+                },
+            }
         },
         shadow: true,
         colors: ['transparent'].concat(highcharts_colors),
@@ -208,12 +222,14 @@ export default function SunburstChart(){
             }
         }
     }
-
-    function onRender(chart:any) {
+    
+    function onRender(chart:any, e:any) {
         if(root_node != null){
-            setTimeout(function () {
-                if (chart.hasOwnProperty('series')){
-                    var series = chart.series[0];
+            chart.showLoading();
+            setTimeout(function(){
+                if (chart.hasOwnProperty("series")){
+                    let series = chart.series[0]
+                    console.log(series)
                     if ((root_node === '1') || (root_node === '2')){
                         series.setRootNode(root_node)
                         showLevel(3, chart)
@@ -224,8 +240,8 @@ export default function SunburstChart(){
                         showLevel(4, chart)
                     }
                 }
-                
-            }, 200)
+                chart.hideLoading();
+            },3500)
         }
     };
 
@@ -340,6 +356,7 @@ export default function SunburstChart(){
               highcharts={Highcharts}
               options={chartOptions}
               callback = {onRender}
+              allowChartUpdate = { true }
               webviewStyles={{backgroundColor: 'transparent'}}
             />
           </div>
