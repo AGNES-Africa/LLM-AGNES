@@ -26,48 +26,51 @@ export default function SunburstChart(){
     const highcharts_colors:any = Highcharts.getOptions().colors
 
     useEffect(() => {
-        
-        fetch('http://localhost:8000/api/db_hierarchy', {
-            method: "GET",
-            headers: {
-              accept: "application/json",
-            },
-          })
-          .then((res) => res.json())
-          .then((data:any) => {
-            let arr:any = [{
-                id: '0',
-                parent: '',
-                name: 'Climate Action Streams'
-            }]
+        const fetchData = async () => {
+            const data = await fetch('http://localhost:8000/api/db_hierarchy', {
+                method: "GET",
+                headers: {
+                    accept: "application/json",
+                },
+            })
+            .then((res) => res.json())
+            .then((data:any) => {
+                let arr:any = [{
+                    id: '0',
+                    parent: '',
+                    name: 'Climate Action Streams'
+                }]
 
-            for (let i = 0; i < data.length; i++) {
-                arr.push({
-                    id: (i+1).toString(),
-                    parent: '0',
-                    name: data[i].name
-                })
-                for (let j = 0; j < data[i].children.length; j++) {
+                for (let i = 0; i < data.length; i++) {
                     arr.push({
-                        id: (i+1) + "." + (j+1),
-                        parent: (i+1).toString(),
-                        name: ((data[i].children)[j]).name
+                        id: (i+1).toString(),
+                        parent: '0',
+                        name: data[i].name
                     })
-
-                    for (let k = 0; k < data[i].children[j].children.length; k++) {
+                    for (let j = 0; j < data[i].children.length; j++) {
                         arr.push({
-                            id: (i+1) + "." + (j+1) + "." + (k+1),
-                            parent: (i+1) + "." + (j+1),
-                            name: (((data[i].children)[j]).children[k]).name,
-                            value: (((data[i].children)[j]).children[k]).size,
-                            stream_id: data[i].name == "Agriculture"? 1 : 2,
-                            category_id: (((data[i].children)[j]).children[k]).id
+                            id: (i+1) + "." + (j+1),
+                            parent: (i+1).toString(),
+                            name: ((data[i].children)[j]).name
                         })
+
+                        for (let k = 0; k < data[i].children[j].children.length; k++) {
+                            arr.push({
+                                id: (i+1) + "." + (j+1) + "." + (k+1),
+                                parent: (i+1) + "." + (j+1),
+                                name: (((data[i].children)[j]).children[k]).name,
+                                value: (((data[i].children)[j]).children[k]).size,
+                                stream_id: data[i].name == "Agriculture"? 1 : 2,
+                                category_id: (((data[i].children)[j]).children[k]).id
+                            })
+                        }
                     }
                 }
-            }
-            set_data(arr)
-        })
+                set_data(arr)
+            })
+            return data
+        }
+        fetchData();
     }, []);
 
     const chartOptions:any = {
