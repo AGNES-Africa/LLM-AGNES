@@ -9,18 +9,9 @@ export default function NavBar() {
       <NavbarBrand>
         <a href="/">
           <Image
-            src="/agnes-logo.png"
-            alt="Agnes Logo"
-            width={180}
-            height={60}
-            className="mr-4"
-          />
-        </a>
-        <a href="/">
-          <Image
             src="/climate_action-ai-logo.png"
             alt="Agnes Logo"
-            width={290}
+            width={320}
             height={60}
           />
         </a>

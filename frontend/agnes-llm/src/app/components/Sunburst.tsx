@@ -7,6 +7,7 @@ import HighchartsSunburst from 'highcharts/modules/sunburst';
 import { renderToStaticMarkup } from "react-dom/server";
 import ClimateActionLabel from "./ClimateActionLabel";
 import AgricultureLabel from "./AgricultureLabel";
+import GenderLabel from "./GenderLabel";
 import GeneralLabel from "./GeneralLabel";
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation'
@@ -117,6 +118,9 @@ export default function SunburstChart(){
                     }
                     if (this.point.name == "Agriculture"){
                         return renderToStaticMarkup(<AgricultureLabel name={this.point.name} />);
+                    }
+                    if (this.point.name == "Gender"){
+                        return renderToStaticMarkup(<GenderLabel name={this.point.name} />);
                     }
                     return renderToStaticMarkup(<GeneralLabel name={this.point.name} />);
                 }
