@@ -1,10 +1,7 @@
-import React, { Component } from "react";
+import React from "react";
 
-class GeneralLabel extends Component {
-  render() {
-    return <div>
-      <h6>{this.props.name}</h6>
-    </div>;
-  }
+export default function GeneralLabel ({name}:any){
+  return <div>
+    <h6>{name}</h6>
+  </div>;
 }
-export default GeneralLabel;

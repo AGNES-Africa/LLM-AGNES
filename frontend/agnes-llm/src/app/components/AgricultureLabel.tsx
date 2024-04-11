@@ -1,18 +1,15 @@
-import React, { Component } from "react";
+import React from "react";
 import Image from "next/image";
 
-class AgricultureLabel extends Component {
-  render() {
-    return <div>
-      <Image
-            src="/agriculture-icon.png"
-            alt="Agnes Logo"
-            width={50}
-            height={60}
-      />
-      <br/>
-      <h6>{this.props.name}</h6>
-    </div>;
-  }
+export default function AgricultureLabel ({name}:any){
+  return <div>
+    <Image
+          src="/agriculture-icon.png"
+          alt="Agnes Logo"
+          width={50}
+          height={60}
+    />
+    <br/>
+    <h6>{name}</h6>
+  </div>;
 }
-export default AgricultureLabel;

@@ -11,6 +11,7 @@ export default function ArticleView({article_id}:any) {
     category: "",
     negotiation_stream:"",
     negotiation_stream_id:"",
+    summary:"",
     created_at:"",
     url:""
   })

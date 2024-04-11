@@ -44,9 +44,9 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
         items: json,
       };
     },
-    async sort({items, sortDescriptor}) {
+    async sort({items, sortDescriptor}:any) {
       return {
-        items: items.sort((a, b) => {
+        items: items.sort((a:any, b:any) => {
           let first = a[sortDescriptor.column];
           let second = b[sortDescriptor.column];
           let cmp = (parseInt(first) || first) < (parseInt(second) || second) ? -1 : 1;
@@ -65,7 +65,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
     let filteredArticles = [...list.items];
 
     if(hasStreamFilter){
-        filteredArticles = filteredArticles.filter((article) =>
+        filteredArticles = filteredArticles.filter((article:any) =>
             article.negotiation_stream_id === parseInt(streamValue)
         );
         console.log(filteredArticles)
@@ -73,7 +73,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
     }
 
     if (hasSearchFilter) {
-      filteredArticles = filteredArticles.filter((article) =>
+      filteredArticles = filteredArticles.filter((article:any) =>
         article.condensed_summary.toLowerCase().includes(filterValue.toLowerCase()) ||
         article.name.toLowerCase().includes(filterValue.toLowerCase())
       );
@@ -93,13 +93,13 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
   }, [page, filteredItems, rowsPerPage]);
 
 
-  const onRowsPerPageChange = React.useCallback((e) => {
+  const onRowsPerPageChange = React.useCallback((e:any) => {
     setRowsPerPage(Number(e.target.value));
     setPage(1);
   }, []);
 
 
-  const onSearchChange = React.useCallback((value) => {
+  const onSearchChange = React.useCallback((value:any) => {
     if (value) {
       setFilterValue(value);
       setPage(1);
@@ -108,7 +108,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
     }
   }, []);
 
-  const onStreamSelect = React.useCallback((value) => {
+  const onStreamSelect = React.useCallback((value:any) => {
     setStreamValue(value.currentKey)
     setPage(1)
   }, []); 

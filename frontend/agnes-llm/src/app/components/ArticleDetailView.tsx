@@ -12,6 +12,7 @@ export default function ArticleDetailView({article_id}:any) {
     negotiation_stream:"",
     negotiation_stream_id:"",
     created_at:"",
+    summary: "",
     url:""
   })
 
