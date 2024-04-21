@@ -61,7 +61,7 @@ export default function SunburstChart(){
                                 parent: (i+1) + "." + (j+1),
                                 name: (((data[i].children)[j]).children[k]).name,
                                 value: (((data[i].children)[j]).children[k]).size,
-                                stream_id: data[i].name == "Agriculture"? 1 : 2,
+                                stream_id: i+1,
                                 category_id: (((data[i].children)[j]).children[k]).id
                             })
                         }
@@ -234,7 +234,7 @@ export default function SunburstChart(){
                 if (chart.hasOwnProperty("series")){
                     let series = chart.series[0]
                     console.log(series)
-                    if ((root_node === '1') || (root_node === '2')){
+                    if ((root_node === '1') || (root_node === '2') || (root_node === '3')){
                         series.setRootNode(root_node)
                         showLevel(3, chart)
                     }
