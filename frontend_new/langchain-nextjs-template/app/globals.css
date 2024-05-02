@@ -2,8 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
+html {
+  background-color: #282c34;
+}
+
 body {
-  color: gray;
+  background-color:rgba(0,0,0,0.0) !important;
+	color: #000 !important;
 }
 
 body input,
@@ -34,7 +39,10 @@ li {
 .light {
 	background-color:rgba(0,0,0,0.0) !important;
 	color: #000 !important;
-	z-index: 1;
+}
+
+.gray{
+  background-color: "#282c34";
 }
 
 .light2 {
@@ -46,4 +54,15 @@ li {
 .askai{
   color:white !important;
   font-size:14px;
+}
+
+#tsparticles {
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  left: 0;
+  top: 0;
+  z-index: -1;
 }
