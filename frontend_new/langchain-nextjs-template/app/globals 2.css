@@ -1,0 +1,157 @@
+/*custom font*/
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --foreground-rgb: 0, 0, 0;
+  --background-start-rgb: 214, 219, 220;
+  --background-end-rgb: 255, 255, 255;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --foreground-rgb: 255, 255, 255;
+    --background-start-rgb: 0, 0, 0;
+    --background-end-rgb: 0, 0, 0;
+  }
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
+  font-family: arial, verdana;
+}
+
+.light {
+	background-color:rgba(0,0,0,0.0) !important;
+	color: #000 !important;
+	z-index: 1;
+}
+
+.center {
+	margin: auto;
+}
+
+.fontsmall {
+	font-size:13px!important;
+}
+
+.fontsmaller {
+	font-size:12px!important;
+}
+
+.dark-mode {
+  background-color: #000 !important;
+}
+
+.bg-img{
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100vw;
+	height: 100vh;
+	z-index: -1;
+}
+
+.nav-button{
+	background-color: #ffffff !important;
+    padding: 8px!important;
+	padding-top: 8px!important;
+	color: blue!important;
+	font-size:13px!important;
+}
+
+.breadcrumb {
+	/*centering*/
+	display: inline-block;
+	box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.35);
+	overflow: hidden;
+	border-radius: 5px;
+	/*Lets add the numbers for each link using CSS counters. flag is the name of the counter. to be defined using counter-reset in the parent element of the links*/
+	counter-reset: flag; 
+}
+
+.breadcrumbs {
+	border: 1px solid #cbd2d9;
+	border-radius: 0.3rem;
+	display: inline-flex;
+	overflow: hidden;
+	margin-bottom: 15px;
+}
+  
+.breadcrumbs__item {
+	background: #fff;
+	color: blue;
+	outline: none;
+	padding: 0.5em 0.5em 0.5em 1em;
+	position: relative;
+	text-decoration: none;
+	transition: background 0.2s linear;
+	font-size: 13px;
+}
+  
+.breadcrumbs__item:hover:after,
+.breadcrumbs__item:hover {
+	background: #edf1f5;
+}
+  
+.breadcrumbs__item:focus:after,
+.breadcrumbs__item:focus,
+.breadcrumbs__item.is-active:focus {
+	background: #323f4a;
+	color: #fff;
+}
+  
+.breadcrumbs__item:after,
+.breadcrumbs__item:before {
+	background: white;
+	bottom: 0;
+	clip-path: polygon(50% 50%, -50% -50%, 0 100%);
+	content: "";
+	left: 100%;
+	position: absolute;
+	top: 0;
+	transition: background 0.2s linear;
+	width: 1em;
+	z-index: 1;
+}
+  
+.breadcrumbs__item:before {
+	background: #cbd2d9;
+	margin-left: 1px;
+}
+  
+.breadcrumbs__item:last-child {
+	border-right: none;
+}
+  
+.breadcrumbs__item.is-active {
+	background: #edf1f5;
+	color: #333;
+}
+
+.flat a, .flat a:after {
+	background: #333333;
+	color:#eee;
+	transition: all 0.7s;
+}
+.flat a:before {
+	background: #111;
+	box-shadow: 0 0 0 1px #00c;
+}
+.flat a:hover, .flat a.active, 
+.flat a:hover:after, .flat a.active:after{
+	background: #3b5998;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

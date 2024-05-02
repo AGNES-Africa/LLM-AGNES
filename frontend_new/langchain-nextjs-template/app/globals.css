@@ -1,0 +1,49 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  color: gray;
+}
+
+body input,
+body textarea {
+  color: black;
+}
+
+a {
+  color: #2d7bd4;
+}
+
+a:hover {
+  border-bottom: 1px solid;
+}
+
+p {
+  margin: 8px 0;
+}
+
+code {
+  color: #ffa500;
+}
+
+li {
+  padding: 4px;
+}
+
+.light {
+	background-color:rgba(0,0,0,0.0) !important;
+	color: #000 !important;
+	z-index: 1;
+}
+
+.light2 {
+	background-color:rgba(255, 255, 255, 0.4) !important;
+	color: #000 !important;
+	z-index: 1;
+}
+
+.askai{
+  color:white !important;
+  font-size:14px;
+}

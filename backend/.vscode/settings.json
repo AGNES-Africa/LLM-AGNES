@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/3c590bb4-6660-47de-872d-bb3c7a09ada0/resourceGroups/agnes_llm/providers/Microsoft.Web/sites/agnes-llm-backend",
+    "appService.deploySubpath": "."
+}
