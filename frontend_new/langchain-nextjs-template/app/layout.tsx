@@ -4,13 +4,13 @@ import "./globals.css";
 import { Public_Sans } from "next/font/google";
 import {Providers} from "./providers";
 import NavBar from "@/components/NavBar";
-import Starfield from "@/components/AnimatedBackground";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Container, Row} from "reactstrap";
 
 import React, {useEffect, useState} from "react";
 import Particles, {initParticlesEngine} from "@tsparticles/react";
 import {loadFull} from "tsparticles";
+
 const publicSans = Public_Sans({ subsets: ["latin"] });
 
 export default function RootLayout({
@@ -36,16 +36,20 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>Climate Action AI</title>
-        <link rel="shortcut icon" href="llm_logo.png" />
+        <link rel="shortcut icon" href="climate_action-ai-logo-small.png" />
       </head>
       <body>
       <Providers>
       <Container>
-      <div className="gray">
         {init && <Particles options={
           {
             "background": {
-              "color": "#282c34"
+              "color": "#282c34",
+              "size" : "cover"
+            },
+            "fullScreen": {
+              "enable": true,
+              "zIndex": 1
             },
             "particles": {
               "color": {
@@ -55,7 +59,7 @@ export default function RootLayout({
                 "color": "#ffffff",
                 "distance": 150,
                 "enable": true,
-                "opacity": 0.09,
+                "opacity": 0.29,
                 "width": 1
               },
               "collisions": {
@@ -78,7 +82,7 @@ export default function RootLayout({
                 "value": 0.09
               },
               "shape": {
-                "type": "circle"
+                "type": "triangle"
               },
               "size": {
                 "value": 5
@@ -93,7 +97,6 @@ export default function RootLayout({
         <Row className="mt-2">
           {children}
         </Row>
-      </div>
       </Container>
       </Providers>
       </body>
