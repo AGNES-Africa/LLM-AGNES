@@ -7,7 +7,7 @@ export default function Home() {
        <Image
           src="/agnes-logo.png"
           alt="Agnes Logo"
-          width={210}
+          width={200}
           height={30}
         ></Image>
       <ul className="mt-2">
