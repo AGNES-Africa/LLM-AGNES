@@ -45,7 +45,8 @@ li {
 }
 
 .gray{
-  z-index: 1!important;
+  background-color: #282c34!important;
+  color: white;
 }
 
 .light2 {
@@ -56,7 +57,7 @@ li {
 
 .askai{
   color:white !important;
-  font-size:14px;
+  font-size:13px;
 }
 
 #tsparticles {
