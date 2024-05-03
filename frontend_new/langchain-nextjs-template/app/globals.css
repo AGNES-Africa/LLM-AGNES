@@ -3,12 +3,15 @@
 @tailwind utilities;
 
 html {
-  background-color: #282c34;
+  color: white;
+  background-color: #282c34!important;
+  z-index: -1!important;
 }
 
 body {
-  background-color:rgba(0,0,0,0.0) !important;
-	color: #000 !important;
+  color: white;
+  background-color: #282c341c!important;
+  z-index: -1!important;
 }
 
 body input,
@@ -42,12 +45,12 @@ li {
 }
 
 .gray{
-  background-color: "#282c34";
+  z-index: 1!important;
 }
 
 .light2 {
 	background-color:rgba(255, 255, 255, 0.4) !important;
-	color: #000 !important;
+	color: rgb(10, 10, 34) !important;
 	z-index: 1;
 }
 
