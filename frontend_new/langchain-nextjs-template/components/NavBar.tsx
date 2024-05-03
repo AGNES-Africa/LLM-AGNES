@@ -1,38 +1,96 @@
 import React from "react";
-import {Navbar, NavbarBrand, NavbarItem, Link, Button} from "@nextui-org/react";
+import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button, DropdownItem, DropdownTrigger, Dropdown, DropdownMenu} from "@nextui-org/react";
 import Image from "next/image";
-import {SearchIcon} from './SearchIcon';
+import {ChevronDown, Search, Flash} from "./Icons.jsx";
+import { useRouter } from 'next/navigation';
 
 export default function NavBar() {
+  const router = useRouter();
+
+  const icons = {
+
+    chevron: <ChevronDown 
+      fill="currentColor"
+      height={16}
+      width={16}
+      size={16} 
+    />,
+    
+    search: <Search 
+      className="text-success"
+      fill="currentColor"
+      width={90} 
+    />,
+
+    flash: <Flash 
+      className="text-primary" 
+      fill="currentColor" 
+      size={18}
+      height={18}
+      width={18}
+    />,
+  };
+
+  const navigation = (key:any) => {
+    if (key == "browse"){
+      router.push('/corpus')
+    }
+  }
+
   return (
     <Navbar className='light' maxWidth={'full'}>
       <NavbarBrand>
         <Image
           src="/climate_action-ai-logo.png"
           alt="Agnes Logo"
-          width={320}
-          height={60}
+          width={350}
+          height={80}
         />
       </NavbarBrand>
-      <NavbarItem>
-        <Button color="primary" size="sm" variant="shadow"
-          href="/corpus"
-          as={Link}>
-          Browse Document Corpus
-        </Button>
-      </NavbarItem>
-      <NavbarItem>
-        <Button color="primary" size="sm" variant="shadow"
-          href="/latest_articles"
-          as={Link}>
-          Browse Latest Documents
-        </Button>
-      </NavbarItem>
-      <NavbarItem>
-        <Button color="secondary" size="sm" variant="shadow" endContent={<SearchIcon/>}>
-          Keyword Search
-        </Button>
-      </NavbarItem>
+      <NavbarContent className="hidden md:flex gap-2 mt-3" justify="center">
+        <NavbarItem isActive>
+          <Button as={Link} color="primary" href="/" variant="flat" size="sm" className="askai">
+            Home
+          </Button>
+        </NavbarItem>
+        <Dropdown className="gray askai">
+          <NavbarItem>
+            <DropdownTrigger>
+              <Button
+                endContent={icons.chevron}
+                color="primary"
+                size="sm"
+                className="askai"
+              >
+                Document Corpus
+              </Button>
+            </DropdownTrigger>
+          </NavbarItem>
+          <DropdownMenu
+            aria-label="Document Corpus"
+            className="w-[340px] askai"
+            itemClasses={{
+              base: "gap-4",
+            }}
+            onAction={(key) => navigation(key)}
+          >
+            <DropdownItem
+              key="browse"
+              description="Browse the Climate Change Documents queried by the AI."
+              startContent={icons.search}
+            >
+              Browse Document Corpus
+            </DropdownItem>
+            <DropdownItem
+              key="latest"
+              description="View the latest Documents added to the corpus."
+              startContent={icons.flash}
+            >
+              Latest Documents
+            </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+      </NavbarContent>
     </Navbar>
   );
 }
