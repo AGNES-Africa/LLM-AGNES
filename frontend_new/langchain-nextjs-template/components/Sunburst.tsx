@@ -64,7 +64,7 @@ export default function SunburstChart(){
                 }
                 set_data(arr)
             })
-        return data
+            return data
         }
         fetchData();
     }, []);
@@ -79,21 +79,7 @@ export default function SunburstChart(){
         },
         chart: {
             height: '55%',
-            backgroundColor: 'transparent',
-            events: {
-                load(this, e:any) {
-                    //e.preventDefault()
-                    console.log("load")
-                },
-                redraw(this, e:any) {
-                    //e.preventDefault()
-                    console.log("redraw")
-                },
-                render(this, e:any) {
-                    //e.preventDefault()
-                    console.log("render")
-                },
-            }
+            backgroundColor: 'transparent'
         },
         shadow: true,
         colors: ['transparent'].concat(highcharts_colors),
@@ -185,7 +171,7 @@ export default function SunburstChart(){
                 buttonTheme: {
                     fill: '#f7f7f7',
                     padding: 8,
-                    stroke: '#cccccc',
+                    stroke: '#ffffff',
                     'stroke-width': 1
                 },
                 events: {
