@@ -30,7 +30,7 @@ class FrontendGroupView(generics.ListCreateAPIView):
     serializer_class = FrontendSerializer
 
     def get_queryset(self):
-        return NegotiationStream.objects.all()
+        return NegotiationStream.objects.all().order_by('-name')
     
 
 class ArticleDetailAPIView(generics.RetrieveAPIView):
