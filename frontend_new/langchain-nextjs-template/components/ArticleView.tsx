@@ -27,14 +27,14 @@ export default function ArticleView({article_id}:any) {
   }, []);
 
   return (
-          <Card className="max-w-[1000px] center mt-10">
+          <Card className="max-w-[1500px] center gray3">
             <CardHeader className="flex gap-3">
               <Container className="flex flex-col">
                 <Row>
                   <Col>
                     <nav className="breadcrumbs">
                       <Link href={{
-                        pathname: '/',
+                        pathname: '/corpus/',
                         query: {
                           back_link: data.negotiation_stream_id
                         }
@@ -70,7 +70,7 @@ export default function ArticleView({article_id}:any) {
               <Container className="flex flex-col">
                 <Row>
                     <Col className="col-12 fontsmall">
-                    <p className="fontsmall">
+                    <p className="fontsmall justified">
                       <b>Summary</b>
                       <br/><br/>
                       {data.summary}
