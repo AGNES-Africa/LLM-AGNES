@@ -92,7 +92,6 @@ class Category(models.Model):
 
 class Article(models.Model):
     title = models.CharField(max_length=200)
-    condensed_summary = models.TextField(blank=True, null=True)
     summary = models.TextField()
     slug = models.SlugField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField()
