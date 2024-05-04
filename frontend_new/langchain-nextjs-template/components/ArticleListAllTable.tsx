@@ -5,6 +5,7 @@ import { Container, Row, Col } from "reactstrap";
 import { Accordion, AccordionItem } from "@nextui-org/accordion";
 import Link from 'next/link';
 import {SearchIcon} from './SearchIcon';
+import "../app/globals.css";
 
 export default function ArticleListAllTable({stream_id,category_id}:any) {
   const [isLoading, setIsLoading] = useState(true);
@@ -78,7 +79,6 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
         article.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
-    console.log("here")
 
     return filteredArticles;
   }, [list.items, filterValue, streamValue]);
@@ -119,21 +119,26 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
       <div>
         <div>
         <Select size="sm" color="primary"
+            variant="bordered"
             label="Climate Action Stream" 
-            className="max-w-xs" 
+            className="max-w-xs gray3" 
             value={streamValue}
             onSelectionChange={onStreamSelect}
         >
-            <SelectItem key='1' value='1'>
+            <SelectItem key='1' value='1' className="gray askai fontsmaller">
                 Agriculture
             </SelectItem>
-            <SelectItem key='2' value='1'>
+            <SelectItem key='2' value='2' className="gray askai fontsmaller">
                 Gender
+            </SelectItem>
+            <SelectItem key='3' value='3' className="gray askai fontsmaller">
+                Finance
             </SelectItem>
         </Select>
         </div>
         <div className="mt-5">
           <Input
+            color="primary"
             isClearable
             classNames={{
               base: "w-full sm:max-w-[44%]",
@@ -142,7 +147,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
                 "fontsmall",
               ],
             }}
-            placeholder="Search by summary text..."
+            placeholder="Text search..."
             size="sm"
             startContent={<SearchIcon className="text-default-300" />}
             value={filterValue}
@@ -209,7 +214,11 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
         return (
           <div className="flex flex-col">
             <Accordion isCompact defaultExpandedKeys={["item"]} itemClasses={itemClasses}>
-              <AccordionItem key="item" title={article.name} className="fontsmall">{article.condensed_summary}</AccordionItem>
+              <AccordionItem key="item" title={"⦿   " + article.name} className="fontsmall">
+                <div className="accordion-indented">
+                  {article.condensed_summary}
+                </div>
+              </AccordionItem>
             </Accordion>
           </div>
         );
@@ -223,7 +232,8 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
         return (
           <div className="relative flex items-center gap-2">
             <Button 
-              color="default" 
+              color="primary" 
+              variant="bordered"
               size="sm"
               href={"/article_detail/"+article.id}
               as={Link}
@@ -231,11 +241,11 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
               View Detail
             </Button>
             <Button 
-              color="primary" 
+              color="secondary" 
+              variant="bordered"
               size="sm" 
               href={article.url}
               as={Link}
-              variant="solid"
             >
               Visit
             </Button>
@@ -247,7 +257,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
   }, []);
 
   return (
-    <Container className="light">
+    <Container>
       <Row className="mt-6">
         <Col className="md-6">
           <Table 
@@ -257,6 +267,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
             onSortChange={list.sort}
             bottomContent={bottomContent}
             topContent={topContent}
+            className="gray3 rounded"
           >
             <TableHeader columns={columns}>
               {(column) => (

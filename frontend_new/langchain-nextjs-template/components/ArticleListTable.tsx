@@ -32,7 +32,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
     title: "font-bold text-small",
     trigger: "px-2 py-0 data-[hover=true]:bg-default-100 rounded-lg h-10 flex items-center",
     indicator: "text-small",
-    content: "light px-2",
+    content: "px-2",
   };
 
   let list = useAsyncList({
@@ -110,7 +110,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
       <div>
         <nav className="breadcrumbs">
           <Link href={{
-            pathname: '/',
+            pathname: '/corpus/',
             query: {
               back_link: stream_id
             }
@@ -118,7 +118,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
             ← {stream}
           </Link>
           <Link href={{
-            pathname: '/',
+            pathname: '/corpus/',
             query: {
               back_link: back_link
             }
@@ -129,6 +129,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
         </nav>
         <div>
           <Input
+            color="primary"
             isClearable
             classNames={{
               base: "w-full sm:max-w-[44%]",
@@ -137,7 +138,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
                 "fontsmall",
               ],
             }}
-            placeholder="Search by summary text..."
+            placeholder="Text search..."
             size="sm"
             startContent={<SearchIcon className="text-default-300" />}
             value={filterValue}
@@ -184,7 +185,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
           isDisabled={hasSearchFilter}
           page={page}
           total={pages}
-          variant="light"
+          variant="flat"
           onChange={setPage}
         />
       </div>
@@ -201,7 +202,11 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
         return (
           <div className="flex flex-col">
             <Accordion isCompact defaultExpandedKeys={["item"]} itemClasses={itemClasses}>
-              <AccordionItem key="item" title={article.name} className="fontsmall">{article.condensed_summary}</AccordionItem>
+              <AccordionItem key="item" title={"⦿   " + article.name} className="fontsmall accordion-indented">
+                <div className="accordion-indented">
+                  {article.condensed_summary}
+                </div>
+                </AccordionItem>
             </Accordion>
           </div>
         );
@@ -215,7 +220,8 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
         return (
           <div className="relative flex items-center gap-2">
             <Button 
-              color="default" 
+              color="primary" 
+              variant="bordered"
               size="sm"
               href={"/article/"+article.id}
               as={Link}
@@ -223,11 +229,11 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
               View Detail
             </Button>
             <Button 
-              color="primary" 
+              color="secondary" 
+              variant="bordered"
               size="sm" 
               href={article.url}
               as={Link}
-              variant="solid"
             >
               Visit
             </Button>
@@ -239,10 +245,10 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
   }, []);
 
   return (
-    <Container className="light">
+    <Container>
       <Row className="mt-6">
         <Col className="md-6">
-          <Table className="max-w-[1200px] center"
+          <Table className="max-w-[1500px] center gray3 rounded"
             aria-label="Article List"
             title="Article List"
             sortDescriptor={list.sortDescriptor}
@@ -267,7 +273,7 @@ export default function ArticleListTable({stream_id,category_id,node_id}:any) {
               loadingContent={<Spinner label="Loading..." />}
             >
               {(item:any) => (
-                <TableRow key={item.name} className="light">
+                <TableRow key={item.name}>
                   {(columnKey) => <TableCell>{renderCell(item, columnKey)}</TableCell>}
                 </TableRow>
               )}
