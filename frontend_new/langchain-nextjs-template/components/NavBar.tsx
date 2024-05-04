@@ -2,10 +2,11 @@ import React from "react";
 import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button, DropdownItem, DropdownTrigger, Dropdown, DropdownMenu} from "@nextui-org/react";
 import Image from "next/image";
 import {ChevronDown, Search, Flash} from "./Icons.jsx";
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 export default function NavBar() {
   const router = useRouter();
+  const pathname = usePathname();
 
   const icons = {
 
@@ -33,7 +34,12 @@ export default function NavBar() {
 
   const navigation = (key:any) => {
     if (key == "browse"){
-      router.push('/corpus')
+      if (!pathname.includes('corpus')){
+        router.push('/corpus')
+      }   
+    }
+    else{
+      router.push('/latest_articles')
     }
   }
 
