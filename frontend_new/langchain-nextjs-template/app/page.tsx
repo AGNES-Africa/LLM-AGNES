@@ -26,7 +26,7 @@ export default function Home() {
         <li className="text-l">
           ◉
           <span className="ml-2 text-sm">
-            This model runs queries against a curated corpus of Climate Change Documents. The corpus of Documents can be accessed here.
+            This model runs queries against a curated corpus of Climate Change Documents. The corpus of Documents can be accessed <a href="/corpus/">here</a>.
           </span>
         </li>
         <li className="text-l">
@@ -38,7 +38,7 @@ export default function Home() {
         <li className="text-l">
           ◉
           <span className="ml-2 text-sm">
-            To use the model, type a question into the dialog box, and press the 'Ask AI' button.
+            To use the model, type a question into the dialog box below, and press the 'Ask AI' button.
           </span>
         </li>
       </ul>
@@ -47,8 +47,8 @@ export default function Home() {
   return (
     <ChatWindow
       endpoint="api/chat"
-      emoji="🏴‍☠️"
-      titleText="Patchy the Chatty Pirate"
+      emoji="🤖"
+      titleText="AGNES LLM"
       placeholder="Type your question here"
       emptyStateComponent={InfoCard}
     ></ChatWindow>
