@@ -8,3 +8,13 @@ typing-extensions==4.11.0
 whitenoise
 python-dotenv
 psycopg2-binary
+selenium
+pypdf==4.2.0
+beautifulsoup4==4.12.3
+requests==2.31.0
+openai==1.26.0
+langchain==0.1.17
+langchain-openai==0.1.6
+tiktoken==0.6.0
+azure-storage-blob==12.19.1
+pdfminer.six==20231228
