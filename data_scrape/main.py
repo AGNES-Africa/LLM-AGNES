@@ -3,12 +3,13 @@ from utils.open_ai_summary import *
 from azure.storage.blob import BlobServiceClient, BlobClient, ContainerClient
 import time 
 from dotenv import load_dotenv
+from utils.credentials import *
+from utils.existing_urls import *
+from utils.write_to_postgres_db import *
 
 load_dotenv()
 
-options.add_experimental_option("prefs", prefs)
 
-driver = webdriver.Chrome(options=options)
 # UNFCCC decisions Configuration Gender
 def unfccc_main(driver_path, download_directory, save_directory, webpage, category):
     all_urls = crawl_webpage(0,1, webpage)
@@ -69,5 +70,14 @@ driver_path = os.getenv('DRIVER_PATH')
 download_directory = os.getenv('DOWNLOAD_DIRECTORY')
 save_directory = os.getenv('SAVE_DIRECTORY')
 webpage = os.getenv("WEB_PAGE")
-unfccc_main(driver_path, download_directory, save_directory, webpage, category="Agriculture decisions")
+conn_str = get_uri()
+conn = psycopg2.connect(conn_str)
+urls = get_urls_from_db(conn_str)
+process_directory(save_directory, urls, conn)
+conn.close()
+
+# options.add_experimental_option("prefs", prefs)
+
+# driver = webdriver.Chrome(options=options)
+# unfccc_main(driver_path, download_directory, save_directory, webpage, category="Agriculture decisions")
 
