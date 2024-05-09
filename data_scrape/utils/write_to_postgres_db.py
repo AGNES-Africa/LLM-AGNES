@@ -65,7 +65,7 @@ def nego_stream_id(file_path):
     else:
         return None
 def get_scraped_datetime():
-    scraped_datetime = datetime.now().strftime('%Y-%m-%d')
+    scraped_datetime = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     return scraped_datetime
 
 
