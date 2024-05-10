@@ -2,6 +2,7 @@ import os
 import datetime
 import psycopg2
 from datetime import datetime
+from utils.existing_category import *
 
 
 #Define source id dictionary
@@ -77,15 +78,19 @@ def extract_data_from_file(file_path):
         'url': None,
         'created_at': None,
         'summary': None,
+        'category_name': None,
         'negotiation_stream_id_id': nego_stream_id(file_path),
         'resource_id_id': None,
         'source_id_id': None,
+        'category_id_id': None,
         'scraped_at' : get_scraped_datetime()
     }
     with open(file_path, 'r') as file:
         for line in file:
             if line.startswith('Title:'):
-                data['title'] = line.strip().split('Title:', 1)[1].strip()
+                title = line.strip().split('Title:', 1)[1].strip()
+            elif line.startswith('Name:') and 'unfccc' in file_path.lower():
+                data['title'] = line.strip().split('Name:', 1)[1].strip()
             elif line.startswith('Slug:'):
                 data['slug'] = line.strip().split('Slug:', 1)[1].strip().replace('-', ' ').replace('.pdf', '')
             elif line.startswith('URL:'):
@@ -93,7 +98,19 @@ def extract_data_from_file(file_path):
             elif line.startswith('Created:'):
                 data['created_at'] = line.strip().split('Created:', 1)[1].strip()
             elif line.startswith('Summary:'):
-                data['summary'] = line.strip().split('Summary:', 1)[1].strip()
+                summary = line.strip().split('Summary:', 1)[1].strip()
+            elif line.startswith('Category:'):
+                data['category_name'] = line.strip().split('Category:', 1)[1].strip()
+
+        # Apply the condition for unfccc files processing logic based on file_path
+        if 'unfccc' in file_path.lower():
+            if 'title' in locals():
+                data['summary'] = title
+        else:
+            if 'title' in locals():
+                data['title'] = title
+            if 'summary' in locals():
+                data['summary'] = summary
     if not data['created_at']:
         data['created_at'] = datetime.now().strftime('%Y-%m-%d')
     return data
@@ -132,21 +149,16 @@ def process_directory(directory, urls, conn):
                 data = extract_data_from_file(file_path)
                 file_path = os.path.join(subdir, file)
                 source_id, resource_id = get_ref_id(file_path)
+                category_id, category_name = update_category_table(data, conn)
                 print(f"File: {file}, Source ID: {source_id}")
                 print(f"File: {file}, Resource ID: {resource_id}")
                 data['source_id_id'] = source_id # Set the source ID based on the directory
                 data['resource_id_id'] = resource_id
-                if data['url'] not in urls:
-                    print(data['url'])
-                    print(data)
-                        # write_to_db(conn, data) # uncomment if you want to write to the database
-                else:
-                    print("URL already exists in database")
-
-# def main(conn_str, directory):
-#     """Main function to handle the database connection and process directories."""
-#     conn_str = get_uri()
-#     conn = psycopg2.connect(conn_str)
-#     urls = db_urls
-#     process_directory(directory, urls, conn)
-#     conn.close()
+                data['category_id_id'] = category_id.astype(int)
+                data['category_name'] = category_name
+                # if data['url'] not in urls:
+                    # print(data['category_id_id'])
+                print(data)
+                    # write_to_db(conn, data) # uncomment if you want to write to the database
+                # else:
+                #     print("URL already exists in database")

@@ -10,8 +10,8 @@ from utils.write_to_postgres_db import *
 load_dotenv()
 
 
-# UNFCCC decisions Configuration Gender
-def unfccc_main(driver_path, download_directory, save_directory, webpage, category):
+# UNFCCC corpus main scraper 
+def main_unfccc_crawler(driver_path, download_directory, save_directory, webpage, source, resource):
     all_urls = crawl_webpage(0,1, webpage)
     time.sleep(4)
     unique_urls = urls_set(all_urls)
@@ -42,7 +42,9 @@ def unfccc_main(driver_path, download_directory, save_directory, webpage, catego
             created = item['created']
             document_type = item['document_type']
             document_code = item['document_code']
-            category = category
+            source = source
+            resource = resource
+            category = source + '' + '-' + '' + resource
             summary = ''# Placeholder for the summary
             
             output_filename = f"{pdf_filename}.txt"
@@ -54,11 +56,13 @@ def unfccc_main(driver_path, download_directory, save_directory, webpage, catego
                 f.write(f"Slug: {slug}\n")
                 f.write(f"URL: {url}\n")
                 f.write(f"Created: {created}\n")
-                f.write(f"Type:{document_type}\n")
-                f.write(f"Code:{document_code}\n")
-                f.write(f"Category:{category}\n")
-                f.write(f"Summary:{summary}\n")
-                f.write("Text:\n")
+                f.write(f"Type: {document_type}\n")
+                f.write(f"Code: {document_code}\n")
+                f.write(f"Source: {source}\n")
+                f.write(f"Resource: {resource}\n")
+                f.write(f"Category: {category}\n")
+                f.write(f"Summary: {summary}\n")
+                f.write("Text: \n")
                 f.write(text)
                 print(f"Data for {url} written to {output_filepath}")
         else:
@@ -73,11 +77,12 @@ webpage = os.getenv("WEB_PAGE")
 conn_str = get_uri()
 conn = psycopg2.connect(conn_str)
 urls = get_urls_from_db(conn_str)
-process_directory(save_directory, urls, conn)
-conn.close()
+
 
 # options.add_experimental_option("prefs", prefs)
 
 # driver = webdriver.Chrome(options=options)
-# unfccc_main(driver_path, download_directory, save_directory, webpage, category="Agriculture decisions")
+# main_unfccc_crawler(driver_path, download_directory, save_directory, webpage, source="unfccc", resource="decisions")
+process_directory(save_directory, urls, conn)
+conn.close()
 
