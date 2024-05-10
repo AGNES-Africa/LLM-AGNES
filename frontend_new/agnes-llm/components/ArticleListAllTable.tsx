@@ -75,7 +75,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
 
     if (hasSearchFilter) {
       filteredArticles = filteredArticles.filter((article:any) =>
-        article.condensed_summary.toLowerCase().includes(filterValue.toLowerCase()) ||
+        article.summary.toLowerCase().includes(filterValue.toLowerCase()) ||
         article.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
@@ -216,7 +216,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
             <Accordion isCompact defaultExpandedKeys={["item"]} itemClasses={itemClasses}>
               <AccordionItem key="item" title={"⦿   " + article.name} className="fontsmall">
                 <div className="accordion-indented">
-                  {article.condensed_summary}
+                  {article.summary.split(" ", 50).join(" ") + "...  "}<a href={"/article/"+article.id}>Read more</a>
                 </div>
               </AccordionItem>
             </Accordion>
