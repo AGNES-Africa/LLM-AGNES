@@ -95,6 +95,7 @@ class Article(models.Model):
     summary = models.TextField()
     slug = models.SlugField(max_length=255, blank=True, null=True)
     created_at = models.DateTimeField()
+    crawled_at = models.DateTimeField(blank=True, null=True)
     url = models.URLField()
     negotiation_stream_id = models.ForeignKey(to=NegotiationStream, on_delete=models.DO_NOTHING)
     source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING)
