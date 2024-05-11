@@ -1,5 +1,3 @@
-"use client";
-
 import "./globals.css";
 import { Public_Sans } from "next/font/google";
 import {Providers} from "./providers";

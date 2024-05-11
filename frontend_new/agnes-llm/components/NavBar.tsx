@@ -1,3 +1,5 @@
+"use client";
+
 import React from "react";
 import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button, DropdownItem, DropdownTrigger, Dropdown, DropdownMenu} from "@nextui-org/react";
 import Image from "next/image";
