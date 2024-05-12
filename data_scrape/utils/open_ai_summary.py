@@ -10,7 +10,7 @@ load_dotenv()
 api_key = os.getenv('OPEN_API_KEY')
 os.environ["OPENAI_API_KEY"]=api_key
 
-def generate_summary_with_gpt3(text):
+def generate_summary_with_gpt3(text, max_length=200):
     """
     This function sends the provided text to OpenAI's GPT-3 model to generate a summary.
     """
@@ -23,7 +23,7 @@ def generate_summary_with_gpt3(text):
     chain_type='map_reduce',
     verbose=False
     )
-    summary = chain.run(chunks)
+    summary = chain.run(chunks, max_length=max_length)
 
     return summary
 
@@ -36,7 +36,7 @@ def process_files(directory_path):
                 if not line.strip().endswith("Summary:"):  
                     continue  
                 text = "".join(lines)
-                summary = generate_summary_with_gpt3(text)
+                summary = generate_summary_with_gpt3(text, max_length=200)
                 
                 lines[i] = f"Summary: {summary}\n"
                 break

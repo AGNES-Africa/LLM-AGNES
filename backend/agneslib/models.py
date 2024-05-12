@@ -89,7 +89,6 @@ class Category(models.Model):
         self.slug = to_assign
         super(Category, self).save(*args, **kwargs)
 
-
 class Article(models.Model):
     title = models.CharField(max_length=200)
     summary = models.TextField()
@@ -101,7 +100,8 @@ class Article(models.Model):
     source_id = models.ForeignKey(to=Source, on_delete=models.DO_NOTHING)
     resource_id = models.ForeignKey(to=Resource, on_delete=models.DO_NOTHING, related_name="articles", blank=True, null=True)
     category_id = models.ForeignKey(to=Category, on_delete=models.DO_NOTHING, related_name="children", blank=True, null=True)
-    
+
+
     class Meta:
         db_table = "Article"
         ordering=("-created_at",)

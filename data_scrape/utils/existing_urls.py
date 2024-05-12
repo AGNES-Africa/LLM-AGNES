@@ -7,7 +7,7 @@ def get_urls_from_db(conn_str):
         conn = psycopg2.connect(conn_str)
         
         cur = conn.cursor()
-        cur.execute('SELECT url FROM public."Article";')
+        cur.execute('SELECT url FROM public."Article2"')
         
         urls = [row[0] for row in cur.fetchall()]  
         
