@@ -20,16 +20,16 @@ source_ids = {
 
 # Define resource id pattern
 resource_patterns = [
-    ('txt_ipcc', 'gender', 8),
+    ('raw_ipcc', 'gender', 8),
     ('raw_unfccc', 'agriculture', 2),
-    ('txt_fao_koronivia', 'agriculture', 3),
-    ('txt_wwf', 'agriculture', 4),
-    ('txt_ipcc', 'agriculture', 5),
+    ('raw_fao_koronivia', 'agriculture', 3),
+    ('raw_wwf', 'agriculture', 4),
+    ('raw_ipcc', 'agriculture', 5),
     ('raw_unfccc', 'gender', 6),
-    ('txt_un_women', 'gender', 7),
-    ('txt_gcf', 'finance', 9),
-    ('txt_adaptation_fund', 'finance', 10),
-    ('txt_unfccc', 'finance', 11)
+    ('raw_un_women', 'gender', 7),
+    ('raw_gcf', 'finance', 9),
+    ('raw_adaptation_fund', 'finance', 10),
+    ('raw_unfccc', 'finance', 11)
 ]
 
 def get_ref_id(file_path):
@@ -92,13 +92,13 @@ def extract_data_from_file(file_name, blob_client):
     
     metadata = blob_client.get_blob_properties().metadata
 
-    title = metadata.get('Title')
-    if title:
-        data['title'] = title
+    # title = metadata.get('Title')
+    # if title:
+    #     data['title'] = title
 
     name = metadata.get('Name')
     if name:
-        data['name'] = name
+        data['title'] = name
 
 
     slug = metadata.get('Slug')
@@ -109,19 +109,22 @@ def extract_data_from_file(file_name, blob_client):
     if url:
         data['url'] = url
 
-    created_at = metadata.get('created_at')
+    created_at = metadata.get('Created')
     if created_at:
         data['created_at'] = created_at
     else:
         data['created_at'] = datetime.now().strftime('%Y-%m-%d')
 
     summary = metadata.get('Summary')
-    if title and 'unfccc' in blob_client.blob_name.lower():
-        data['summary'] = title
-        data['title'] = name
-    else:
+    if summary:
         data['summary'] = summary
-        data['title'] = title
+
+    # if title and 'unfccc' in blob_client.blob_name.lower():
+    #     data['summary'] = title
+    #     data['title'] = name
+    # else:
+    #     data['summary'] = summary
+    #     data['title'] = title
      
 
     category_name = metadata.get('Category')
@@ -161,13 +164,14 @@ def write_to_db(conn, data):
         print(f"Error inserting data into database: {e}")
         conn.rollback()
 
-def process_directory(urls, conn, container_name, connection_string, blob_directory_name):
+def process_directory(conn, container_name, connection_string, blob_directory_name):
     """Processes files in a directory, applying specific logic for source_id_id based on subdirectory."""
     container_name = container_name
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     container_client = blob_service_client.get_container_client(container_name)
 
     blob_list = container_client.list_blobs(name_starts_with=blob_directory_name)
+    print("All blobs found in:", blob_directory_name)
 
     for blob in blob_list:
         # file_path = os.path.join(subdir, file)
@@ -191,13 +195,14 @@ def process_directory(urls, conn, container_name, connection_string, blob_direct
             current_metadata["Created"] = data['created_at']
 
             blob_client.set_blob_metadata(current_metadata)
+            print(data)
             
-            if data['url'] not in urls:
-                print(data)
-                write_to_db(conn, data) # comment if you want to test
-                print(f"{len(data)} rows from {blob.name} written to postgres Article table")
-            else:
-                print("URL already exists in database")
+            # if data['url'] not in urls:
+            write_to_db(conn, data) # comment if you want to test
+            print(f"{len(data)} rows from {blob.name} written to postgres Article table")
+        
+            # else:
+            #     print("URL already exists in database")
             
 
             """

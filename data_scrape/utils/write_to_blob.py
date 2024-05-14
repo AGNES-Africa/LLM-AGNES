@@ -23,17 +23,22 @@ def upload_file_to_blob(pdf_urls,negotiation_stream, source, category_name):
         Iterate through the PDF URLs and upload each one
         Download the PDF from the URL
     """
-    url_file = pdf_urls['url']
-    print("URL file:", url_file)
-    pdf_data = requests.get(url_file, headers=headers).content
-    print("PDF DATA:", len(pdf_data))
-    blob_directory =f'{negotiation_stream}/{source}/raw_{category_name}' 
-    blob_name = blob_directory + '/' + url_file.split("/")[-1]
-    blob_client = blob_service_client.get_blob_client(container_name, blob_name)
-    
-    # Upload the PDF as a blob
-    blob_client.upload_blob(pdf_data, overwrite=True)
-    print(f"File uploaded to {blob_name} in container {container_name}")
+    counter = 1
+    for entry in pdf_urls:      
+        url_file = entry['url']
+        print("URL file:", url_file)
+        pdf_data = requests.get(url_file, headers=headers).content
+        print("PDF DATA:", len(pdf_data))
+        blob_directory =f'{negotiation_stream}/{source}/raw_{category_name}' 
+        blob_slug = f"{counter}_{url_file.split('/')[-1]}"
+        counter += 1
+        blob_name = blob_directory + '/' + blob_slug
+
+        blob_client = blob_service_client.get_blob_client(container_name, blob_name)
+        
+        # Upload the PDF as a blob
+        blob_client.upload_blob(pdf_data, overwrite=True)
+        print(f"File uploaded to {blob_name} in container {container_name}")
 
 def download_blob_to_string(blob_service_client, container_name, negotiation_stream, source, category_name, blob_name):
     blob_path = f'{negotiation_stream}/{source}/raw_{category_name}/{blob_name}'

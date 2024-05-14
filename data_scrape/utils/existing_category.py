@@ -15,7 +15,7 @@ def update_category_table(data, conn, blob_name):
     cursor.execute('SELECT id, trim(lower(title)) as db_title FROM public."Category";')
     existing_categories = cursor.fetchall()
     category_dict = {name: cid for cid, name in existing_categories}
-    print(category_dict)
+
 
     blob_client = BlobClient.from_connection_string(
     conn_str = connection_string,
