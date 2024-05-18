@@ -16,7 +16,7 @@ def get_uri(use_sqlalchemy=False):
 
     if use_sqlalchemy:
         # SQLAlchemy connection string format
-        conn_string = f"postgresql+psycopg2://{username}:{password}@{host}:5432/{dbname}"
+        conn_string = f"postgresql+psycopg://{username}:{password}@{host}:5432/{dbname}"
     else:
         # psycopg2 connection string format
         conn_string = f"host={host} dbname={dbname} user={username} password={password}"

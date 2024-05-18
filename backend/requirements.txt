@@ -24,3 +24,4 @@ PyMuPDF==1.24.4
 psycopg
 langchain_postgres
 unstructured
+timescale-vector
