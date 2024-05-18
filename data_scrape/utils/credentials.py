@@ -8,13 +8,17 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-def get_uri():
-
+def get_uri(use_sqlalchemy=False):
     username = os.getenv('USER_NAME')
     password = os.getenv('PASSWORD')
     host = os.getenv('HOST_NAME')
     dbname = os.getenv('DB_NAME')
 
-    conn_string = f"host={host} dbname={dbname} user={username} password={password}"
-    return conn_string
+    if use_sqlalchemy:
+        # SQLAlchemy connection string format
+        conn_string = f"postgresql+psycopg2://{username}:{password}@{host}:5432/{dbname}"
+    else:
+        # psycopg2 connection string format
+        conn_string = f"host={host} dbname={dbname} user={username} password={password}"
 
+    return conn_string

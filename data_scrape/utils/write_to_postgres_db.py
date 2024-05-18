@@ -166,7 +166,6 @@ def write_to_db(conn, data):
 
 def process_directory(conn, container_name, connection_string, blob_directory_name):
     """Processes files in a directory, applying specific logic for source_id_id based on subdirectory."""
-    container_name = container_name
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     container_client = blob_service_client.get_container_client(container_name)
 
@@ -198,7 +197,7 @@ def process_directory(conn, container_name, connection_string, blob_directory_na
             print(data)
             
             # if data['url'] not in urls:
-            write_to_db(conn, data) # comment if you want to test
+            # write_to_db(conn, data) # comment if you want to test
             print(f"{len(data)} rows from {blob.name} written to postgres Article table")
         
             # else:

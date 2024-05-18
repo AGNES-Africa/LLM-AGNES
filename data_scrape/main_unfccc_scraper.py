@@ -14,6 +14,8 @@ from utils.credentials import *
 from utils.write_to_postgres_db import *
 from utils.existing_urls import *
 from utils.reformat_date import *
+import fitz
+from utils.write_to_chroma_db import *
 
 def setup_webdriver():
     """Initialise and return a configured instance of a Chrome WebDriver."""
@@ -153,7 +155,7 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
     category_name = source + '-' + resource
 
     upload_file_to_blob(full_urls, negotiation_stream, source, category_name)
-    
+    time.sleep(2)
     driver.quit()
     print(f"Downloaded all files to {category_name}")
     
@@ -165,57 +167,65 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
         
         if pdf_filename.lower().endswith('.pdf'):
             # Download the PDF content directly without saving locally
-            response = requests.get(pdf_url)
+            response = requests.get(pdf_url, headers=headers)
+            time.sleep(3)
             pdf_content = response.content
 
             if pdf_content:
-                slug = item['document_code']
-                title = item['title']
-                url = item['url']
-                name = item['document_name']
-                created = reformat_date(item['created'])
-                document_type = item['document_type']
-                document_code = item['document_code']
-                category = source + ' - ' + resource
-                print("Category:", category)
-                summary = item['summary']
-                
-                output_filename = f"{pdf_filename}.txt"
-                blob_save = f'{negotiation_stream}/{source}/raw_{category_name}'
-                output_filepath = f'{blob_save}/{output_filename}'
-
-                metadata = {
-                    'Title': title,
-                    'Name': name,
-                    'Slug': slug,
-                    'URL': url,
-                    'Created': created,
-                    'Type': document_type,
-                    'Code': document_code,
-                    'Source': source,
-                    'Resource': resource,
-                    'Category': category,
-                    'Summary': summary
-                }
-                blob_client = BlobClient.from_connection_string(
-                    conn_str=connection_string,
-                    container_name=container_name,
-                    blob_name=output_filepath
-                )
                 try:
+                    pdf_document = fitz.open('pdf', pdf_content)
+                    text_content = ''
+                    for page in pdf_document:
+                        text_content+=page.get_text()
+                    pdf_document.close()
+
+                    #Get metadata and other relevant information
+                    slug = item['document_code']
+                    title = item['title']
+                    url = item['url']
+                    name = item['document_name']
+                    created = reformat_date(item['created'])
+                    document_type = item['document_type']
+                    document_code = item['document_code']
+                    category = source + ' - ' + resource
+                    print("Category:", category)
+                    summary = item['summary']
+                    
+                    output_filename = f"{pdf_filename}.txt"
+                    blob_save = f'{negotiation_stream}/{source}/raw_{category_name}'
+                    output_filepath = f'{blob_save}/{output_filename}'
+
+                    metadata = {
+                        'Title': title,
+                        'Name': name,
+                        'Slug': slug,
+                        'URL': url,
+                        'Created': created,
+                        'Type': document_type,
+                        'Code': document_code,
+                        'Source': source,
+                        'Resource': resource,
+                        'Category': category,
+                        'Summary': summary
+                    }
+                    blob_client = BlobClient.from_connection_string(
+                        conn_str=connection_string,
+                        container_name=container_name,
+                        blob_name=output_filepath
+                    )
                     # Upload the PDF content directly to the blob
-                    blob_client.upload_blob(pdf_content, metadata=metadata, overwrite=True)
-                    print(f"Data for {url} written to {output_filepath}")
-                except:
-                    print(f"URL file for {url} could not be converted. Skipping...")
+                    blob_client.upload_blob(text_content, metadata=metadata, overwrite=True)
+                    print(f"Data for {pdf_filename} written to {output_filepath}")
+                except Exception as e:
+                    print(f"URL file for {pdf_filename} could not be converted. Skipping...:{e}")
             else:
-                print(f"Failed to extract text from {pdf_url}")
+                print(f"Failed to extract text from {pdf_filename}")
 
 def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
     source = 'unfccc'
     resource = 'decisions'
-    negotiation_streams = ['agriculture','finance', 'gender']
+    negotiation_streams = ['agriculture','finance', 'gender'] #
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
@@ -229,7 +239,12 @@ def main():
     container_name = os.getenv('BLOB_CONTAINER_NAME')
     connection_string = os.getenv('BLOB_CONNECTION_STRING')
     driver = setup_webdriver()
-    crawl_and_process_data(driver, container_name, connection_string)
+    #crawl and process data from the web
+    crawl_and_process_data(driver, container_name, connection_string)  
+    #write to vector store  
+    streams = ['agriculture', 'finance', 'gender']
+    for stream_name in streams:
+        write_to_vector(container_name,connection_string,stream_name)
 
 if __name__ == '__main__':
     main()

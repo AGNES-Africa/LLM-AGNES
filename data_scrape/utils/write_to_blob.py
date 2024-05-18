@@ -2,8 +2,7 @@ import pdfplumber
 import os
 import io
 import requests
-from pdfminer.high_level import extract_text
-from azure.storage.blob import BlobServiceClient, BlobClient
+from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 
 
@@ -39,6 +38,7 @@ def upload_file_to_blob(pdf_urls,negotiation_stream, source, category_name):
         # Upload the PDF as a blob
         blob_client.upload_blob(pdf_data, overwrite=True)
         print(f"File uploaded to {blob_name} in container {container_name}")
+        return blob_name
 
 def download_blob_to_string(blob_service_client, container_name, negotiation_stream, source, category_name, blob_name):
     blob_path = f'{negotiation_stream}/{source}/raw_{category_name}/{blob_name}'
