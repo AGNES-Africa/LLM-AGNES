@@ -6,6 +6,14 @@ from azure.storage.blob import BlobServiceClient
 import re
 from utils.credentials import *
 import numpy as np
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=512,
+    chunk_overlap=200,
+    length_function=len,
+    is_separator_regex=False,
+)
 
 def normalise_blob_name(blob_name):
     # Extract the filename and remove any leading digits and an underscore
@@ -13,12 +21,8 @@ def normalise_blob_name(blob_name):
     normalised_name = re.sub(r'^\d+_', '', filename)  # Remove leading digits and an underscore
     return normalised_name
 
-
-def chunk_text(text, max_token_size=512):
-    words = text.split()
-    ideal_size = int(max_token_size * 4 / 3)
-    chunks = [' '.join(words[i:i+ideal_size]) for i in range(0, len(words), ideal_size)]
-    return chunks
+def chunk_text(text):
+    return text_splitter.split_text(text)
 
 def write_to_vector(blob_container_name, blob_connection_string):
     conn = psycopg2.connect(get_uri())
