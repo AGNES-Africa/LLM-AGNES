@@ -67,10 +67,10 @@ def crawl_webpage(base_url, driver, stream):
         while count < 9:
     # Process 'Load More' button if present
             try:
-                load_more_button = WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Load More')))
+                load_more_button = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Load More')))
                 if load_more_button and load_more_button.is_displayed():
                     load_more_button.send_keys(Keys.ENTER)
-                    time.sleep(5)
+                    time.sleep(10)
                     scrape_data()  # Scrape hrefs loaded each time load more button is pressed
                     count += 1
             except TimeoutException:
@@ -249,7 +249,8 @@ def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
     source = 'unfccc'
     resource = 'decisions'
-    negotiation_streams = ['agriculture', 'gender', 'finance'] #
+    #negotiation_streams = ['agriculture', 'gender', 'finance']
+    negotiation_streams = ['finance'] # 
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
