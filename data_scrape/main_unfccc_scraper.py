@@ -5,7 +5,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.common.keys import Keys
 from azure.storage.blob import BlobServiceClient, BlobClient
 from dotenv import load_dotenv
 from utils.write_to_blob import *
@@ -27,7 +28,7 @@ def setup_webdriver():
         "plugins.always_open_pdf_externally": True
     }
     options.add_experimental_option("prefs", prefs)
-    driver_path = os.getenv('DRIVER_PATH')
+    # driver_path = os.getenv("DRIVER_PATH")
     return webdriver.Chrome(options=options)
 
 def connect_database():
@@ -42,12 +43,13 @@ def get_blob_client(negotiation_stream, source, category_name, filename):
     blob_path = f'{negotiation_stream}/{source}/{category_name}/{filename}'
     return container_client.get_blob_client(blob_path)
 
-def crawl_webpage(start, end, base_url, driver):
-    """Crawl the specified webpage range and collect document links."""
+def crawl_webpage(base_url, driver, stream):
+    """Crawl the webpage, collect document links, and handle 'Load More' button dynamically."""
+    driver.get(base_url)
     webpage_urls = []
-    for page in range(start, end + 1):
-        driver.get(f"{base_url}&page={page}")
-        time.sleep(1)  # Allow time for the page to load
+
+    def scrape_data():
+        """Function to scrape data from the current state of the webpage."""
         elements_with_href = driver.find_elements(By.CSS_SELECTOR, "a[href*='/documents/']")
         title_elements = driver.find_elements(By.CLASS_NAME, "documentid")
         div_elements = driver.find_elements(By.XPATH, "//div[contains(@class, 'views-field-field-document-decision-symbol-1')]")
@@ -57,6 +59,28 @@ def crawl_webpage(start, end, base_url, driver):
             name = title_element.get_attribute("innerText")
             symbol = div_element.get_attribute("innerText").replace("Symbol: ", "")
             webpage_urls.append({'document_type': 'Decisions', 'url': href, 'document_name': name, 'document_symbol': symbol})
+
+    # Initial scrape
+    scrape_data()
+    if stream == "finance":
+        count = 0
+        while count < 9:
+    # Process 'Load More' button if present
+            try:
+                load_more_button = WebDriverWait(driver, 30).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Load More')))
+                if load_more_button and load_more_button.is_displayed():
+                    load_more_button.send_keys(Keys.ENTER)
+                    time.sleep(5)
+                    scrape_data()  # Scrape hrefs loaded each time load more button is pressed
+                    count += 1
+            except TimeoutException:
+                print("No more 'Load more' button to click.")
+                break
+            except Exception as e:
+                print("An error occurred while trying to click the 'Load more' button:", e)
+                break
+    else:
+        pass
     print("Completed scraping webpage")
     driver.quit()
     return webpage_urls
@@ -144,7 +168,7 @@ def generate_url(negotiation_stream):
 
 def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
     """Main function to crawl, process, and upload data."""
-    all_urls = crawl_webpage(0,1, webpage, driver)
+    all_urls = crawl_webpage(webpage, driver, negotiation_stream)
     time.sleep(4)
     print("All URLs returned")
     time.sleep(4)
@@ -225,7 +249,7 @@ def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
     source = 'unfccc'
     resource = 'decisions'
-    negotiation_streams = ['agriculture','finance', 'gender'] #
+    negotiation_streams = ['agriculture', 'gender', 'finance'] #
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
@@ -241,10 +265,8 @@ def main():
     driver = setup_webdriver()
     #crawl and process data from the web
     crawl_and_process_data(driver, container_name, connection_string)  
-    #write to vector store  
-    streams = ['agriculture', 'finance', 'gender']
-    for stream_name in streams:
-        write_to_vector(container_name,connection_string,stream_name)
+    # write to vector store  
+    write_to_vector(container_name,connection_string)
 
 if __name__ == '__main__':
     main()

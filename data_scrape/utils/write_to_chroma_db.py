@@ -5,6 +5,7 @@ from langchain_community.document_loaders import AzureBlobStorageFileLoader
 from azure.storage.blob import BlobServiceClient
 import re
 from utils.credentials import *
+import numpy as np
 
 def normalise_blob_name(blob_name):
     # Extract the filename and remove any leading digits and an underscore
@@ -29,7 +30,7 @@ def process_embeddings(vector):
         return vector[:1536]
     return vector
 
-def write_to_vector(blob_container_name, blob_connection_string, stream_name):
+def write_to_vector(blob_container_name, blob_connection_string):
     conn = psycopg2.connect(get_uri())
     cursor = conn.cursor()
 
@@ -40,7 +41,7 @@ def write_to_vector(blob_container_name, blob_connection_string, stream_name):
     processed_blobs = {}
 
     for blob in container_client.list_blobs():
-        if blob.name.endswith('.txt') and blob.name.startswith(f'{stream_name}/'):
+        if blob.name.endswith('.txt'):
             normalised_name = normalise_blob_name(blob.name)
             if normalised_name not in processed_blobs:
                 processed_blobs[normalised_name] = True
