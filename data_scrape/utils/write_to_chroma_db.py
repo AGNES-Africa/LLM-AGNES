@@ -58,7 +58,7 @@ def write_to_vector(blob_container_name, blob_connection_string):
                         processed_vector = process_embeddings(embedding_vector)
                         cursor.execute(
                             "INSERT INTO embed.document_embeddings (title, url, slug, vector) VALUES (%s, %s, %s, %s)",
-                            (metadata.get('Title', 'Default Title'), metadata.get('URL', 'Default URL'), normalised_name, processed_vector)
+                            (metadata.get('Summary', 'Default Title'), metadata.get('URL', 'Default URL'), normalised_name, processed_vector)
                         )
                         conn.commit()
 
