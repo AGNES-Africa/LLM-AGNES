@@ -20,16 +20,6 @@ def chunk_text(text, max_token_size=512):
     chunks = [' '.join(words[i:i+ideal_size]) for i in range(0, len(words), ideal_size)]
     return chunks
 
-def process_embeddings(vector):
-    # Ensure the vector length matches the database expected size of 1536
-    if len(vector) < 1536:
-        # Extend vector with zeros if it's too short
-        return np.pad(vector, (0, 1536 - len(vector)), 'constant')
-    elif len(vector) > 1536:
-        # Truncate vector if it's too long
-        return vector[:1536]
-    return vector
-
 def write_to_vector(blob_container_name, blob_connection_string):
     conn = psycopg2.connect(get_uri())
     cursor = conn.cursor()
@@ -37,7 +27,7 @@ def write_to_vector(blob_container_name, blob_connection_string):
     blob_service_client = BlobServiceClient.from_connection_string(blob_connection_string)
     container_client = blob_service_client.get_container_client(blob_container_name)
 
-    embedding = OpenAIEmbeddings(model="text-embedding-ada-002")
+    embedding = OpenAIEmbeddings(model="text-embedding-3-small")
     processed_blobs = {}
 
     for blob in container_client.list_blobs():
@@ -55,10 +45,9 @@ def write_to_vector(blob_container_name, blob_connection_string):
                     chunks = chunk_text(document.page_content)
                     for chunk in chunks:
                         embedding_vector = embedding.embed_query(chunk)
-                        processed_vector = process_embeddings(embedding_vector)
                         cursor.execute(
                             "INSERT INTO embed.document_embeddings (title, url, slug, vector) VALUES (%s, %s, %s, %s)",
-                            (metadata.get('Summary', 'Default Title'), metadata.get('URL', 'Default URL'), normalised_name, processed_vector)
+                            (metadata.get('Summary', 'Default Title'), metadata.get('URL', 'Default URL'), normalised_name, embedding_vector)
                         )
                         conn.commit()
 
