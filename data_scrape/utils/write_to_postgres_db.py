@@ -96,10 +96,11 @@ def extract_data_from_file(file_name, blob_client):
     # if title:
     #     data['title'] = title
 
+    title = metadata.get('Title')
     name = metadata.get('Name')
     if name:
-        data['title'] = name
-
+        data['title'] = name + " - " + title
+        data['title'] = data['title'][0:200]
 
     slug = metadata.get('Slug')
     if slug:
