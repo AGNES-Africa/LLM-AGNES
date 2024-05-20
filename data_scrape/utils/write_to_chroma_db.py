@@ -50,8 +50,8 @@ def write_to_vector(blob_container_name, blob_connection_string):
                     for chunk in chunks:
                         embedding_vector = embedding.embed_query(chunk)
                         cursor.execute(
-                            "INSERT INTO embed.document_embeddings (title, url, slug, vector) VALUES (%s, %s, %s, %s)",
-                            (metadata.get('Summary', 'Default Title'), metadata.get('URL', 'Default URL'), normalised_name, embedding_vector)
+                            "INSERT INTO embed.document_embeddings (url, vector, content) VALUES (%s, %s, %s)",
+                            (metadata.get('URL', 'Default URL'), embedding_vector, chunk)
                         )
                         conn.commit()
 
