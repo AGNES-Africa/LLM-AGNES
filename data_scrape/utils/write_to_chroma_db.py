@@ -1,16 +1,17 @@
 import psycopg2
+import string
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain_openai import OpenAIEmbeddings
 from langchain_community.document_loaders import AzureBlobStorageFileLoader
 from azure.storage.blob import BlobServiceClient
 import re
 from utils.credentials import *
-import numpy as np
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 text_splitter = RecursiveCharacterTextSplitter(
+    separators=["\n\n", "\n", "  ", " ", ""],
     chunk_size=512,
-    chunk_overlap=200,
+    chunk_overlap=100,
     length_function=len,
     is_separator_regex=False,
 )
@@ -33,6 +34,7 @@ def write_to_vector(blob_container_name, blob_connection_string):
 
     embedding = OpenAIEmbeddings(model="text-embedding-3-small")
     processed_blobs = {}
+    count = 1
 
     for blob in container_client.list_blobs():
         if blob.name.endswith('.txt'):
@@ -45,17 +47,37 @@ def write_to_vector(blob_container_name, blob_connection_string):
                 loader = AzureBlobStorageFileLoader(conn_str=blob_connection_string, container=blob_container_name, blob_name=blob.name)
                 documents = loader.load()
 
-                for document in documents:
-                    chunks = chunk_text(document.page_content)
-                    for chunk in chunks:
-                        embedding_vector = embedding.embed_query(chunk)
-                        cursor.execute(
-                            "INSERT INTO embed.document_embeddings (url, vector, content) VALUES (%s, %s, %s)",
-                            (metadata.get('URL', 'Default URL'), embedding_vector, chunk)
-                        )
-                        conn.commit()
+                cursor.execute(
+                    "INSERT INTO embed.llm_documents (id, title, url) VALUES (%s, %s, %s)",
+                    (count, (metadata.get('Summary'))[0:200], metadata.get('URL', 'Default URL'))
+                )
 
+                for document in documents:
+                    raw_text = document.page_content
+
+                    # filter text to remove non-printable characters
+                    raw_text = "".join(filter(lambda char: char in string.printable, raw_text))
+
+                    # deal with multiple spaces
+                    raw_text = re.sub("\s+"," ",raw_text)
+                    
+                    # skip over table of contents and jump to first decision
+                    raw_text = raw_text[next(re.finditer("Decision \d", raw_text)).span()[0]:]
+
+                    if(len(raw_text) > 0):
+                        chunks = chunk_text(raw_text)
+                        for chunk in chunks:
+                            embedding_vector = embedding.embed_query(chunk)
+                            cursor.execute(
+                                "INSERT INTO embed.document_embeddings (vector, content, document_id) VALUES (%s, %s, %s)",
+                                (embedding_vector, chunk, count)
+                            )
+
+                conn.commit()
+                
                 print(f"Document: {normalised_name} successfully added to vector db with unique handling.")
+
+                count = count + 1
 
     cursor.close()
     conn.close()                
