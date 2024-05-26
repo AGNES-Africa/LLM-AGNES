@@ -27,7 +27,7 @@ def upload_file_to_blob(pdf_urls,negotiation_stream, source, category_name):
         url_file = entry['url']
         print("URL file:", url_file)
         pdf_data = requests.get(url_file, headers=headers).content
-        print("PDF DATA:", len(pdf_data))
+        # print("PDF DATA:", len(pdf_data))
         blob_directory =f'{negotiation_stream}/{source}/raw_{category_name}' 
         blob_slug = f"{counter}_{url_file.split('/')[-1]}"
         counter += 1
@@ -57,6 +57,6 @@ def download_blob_to_string(blob_service_client, container_name, negotiation_str
     # Save the extracted text to a .txt file
     with open(f'{blob_path}{blob_name}.txt', 'wb') as file:
         file.write(text.encode())
-        print(len(text))
+        # print(len(text))
 
     return text

@@ -5,8 +5,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 from azure.storage.blob import BlobServiceClient, BlobClient
 from dotenv import load_dotenv
 from utils.write_to_blob import *
@@ -43,47 +42,84 @@ def get_blob_client(negotiation_stream, source, category_name, filename):
     blob_path = f'{negotiation_stream}/{source}/{category_name}/{filename}'
     return container_client.get_blob_client(blob_path)
 
-def crawl_webpage(base_url, driver, stream):
-    """Crawl the webpage, collect document links, and handle 'Load More' button dynamically."""
-    driver.get(base_url)
-    webpage_urls = []
 
-    def scrape_data():
-        """Function to scrape data from the current state of the webpage."""
-        elements_with_href = driver.find_elements(By.CSS_SELECTOR, "a[href*='/documents/']")
-        title_elements = driver.find_elements(By.CLASS_NAME, "documentid")
-        div_elements = driver.find_elements(By.XPATH, "//div[contains(@class, 'views-field-field-document-decision-symbol-1')]")
+def crawl_webpage(driver, start, end):
+    # options = webdriver.ChromeOptions()
+    # driver = webdriver.Chrome(options=options)
+    all_data = []
 
-        for element, title_element, div_element in zip(elements_with_href, title_elements, div_elements):
-            href = element.get_attribute('href')
-            name = title_element.get_attribute("innerText")
-            symbol = div_element.get_attribute("innerText").replace("Symbol: ", "")
-            webpage_urls.append({'document_type': 'Decisions', 'url': href, 'document_name': name, 'document_symbol': symbol})
+    # Function to get publication data for a un women pages and resource type
+    def get_publication_data(resource_type_name, resource_type_code):
+        for page in range(start, end + 1):
+            url = base_url_template.format(resource_type_code, subject_area_code, page)
+            driver.get(url)
+            time.sleep(2)
+            WebDriverWait(driver, 10).until(EC.presence_of_all_elements_located((By.CLASS_NAME, "views-row")))
+            publication_links = driver.find_elements(By.CLASS_NAME, "views-row")
 
-    # Initial scrape
-    scrape_data()
-    if stream == "finance":
-        count = 0
-        while count < 9:
-    # Process 'Load More' button if present
-            try:
-                load_more_button = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Load More')))
-                if load_more_button and load_more_button.is_displayed():
-                    load_more_button.send_keys(Keys.ENTER)
-                    time.sleep(10)
-                    scrape_data()  # Scrape hrefs loaded each time load more button is pressed
-                    count += 1
-            except TimeoutException:
-                print("No more 'Load more' button to click.")
-                break
-            except Exception as e:
-                print("An error occurred while trying to click the 'Load more' button:", e)
-                break
-    else:
-        pass
-    print("Completed scraping webpage")
+            for publication in publication_links:
+                date_elements = publication.find_elements(By.CSS_SELECTOR, ".search-item-date")
+                if date_elements:
+                    date_text = date_elements[1].text if len(date_elements) > 1 else date_elements[0].text
+                    title_element = publication.find_element(By.CSS_SELECTOR, ".search-item-title a")
+                    href = title_element.get_attribute('href')
+                    title_text = title_element.text
+                    all_data.append({
+                        'resource_type': resource_type_name,
+                        'date': date_text,
+                        'title': title_text,
+                        'url': href
+                    })
+
+    # URL template
+    base_url_template = "https://www.unwomen.org/en/digital-library/publications?topic=d7f4313c7a9446babcccc55bf262308d&f%5B0%5D=resource_type_publications%3A{}&f%5B1%5D=subject_area_publications%3A{}&page={}"
+
+    # Resource type code
+    subject_area_code = "1738"
+
+    # Resource type codes mapped to their names
+    resource_type_map = {
+        # "Briefs": "2120",
+        # "Research papers": "2117",
+        # "Manuals/guides": "1410",
+        # "Data/statistics": "1411",
+        # "Assessments": "2105",
+        # "Best practices": "2106",
+        # "Discussion papers": "2111",
+        # "Case studies": "2108",
+        # "Policy papers": "2115",
+        # "Evaluation reports": "2122",
+        # "Institutional reports": "2123",
+        # "Infographics": "2134",
+        # "Brochures": "2131",
+        # "Newsletters/magazines": "1435",
+        "Annual reports": "2119",
+        # "Issue papers": "2135",
+        # "Resource kits": "2118",
+        # "Proceedings": "2116",
+        # "Project/programme reports": "1425",
+        # "Intergovernmental reports": "2158",
+        # "Position reports": "1440",
+        # "Strategic plans": "2129",
+        # "Flagship reports": "2112",
+        # "Expert group meeting reports": "2154"
+    }
+
+    # Iterate over the resource type map and collect data for each resource type
+    for resource_type_name, resource_type_code in resource_type_map.items():
+        try:
+            print(f"Processing resource type: {resource_type_name}")
+            get_publication_data(resource_type_name, resource_type_code)
+        except Exception as e:
+            print(f"Failed to retrieve data for resource type: {resource_type_name} with error: {e}")
+
+    # Close the driver
     driver.quit()
-    return webpage_urls
+
+    # Print and return the collected data
+    for entry in all_data:
+        print(f"Resource type: {entry['resource_type']} | Date: {entry['date']} | URL: {entry['url']}")
+    return all_data
 
 def urls_set(all_urls):
     """Filter and return unique URLs."""
@@ -106,49 +142,39 @@ def process_urls(publications_url, driver):
     for publication in publications_url:
         url = publication['url']
         driver.get(url)
-        name = publication['document_symbol']
-        title = publication['document_name']
-        summary = driver.title
-        publication_date = ''
-        document_type = publication['document_type']
+        resource_type = publication['resource_type']
+        title = publication['title']
+        publication_date = publication['date']
         pdf_href = ''
+        summary = ''
 
         try:
-            publication_date_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '.field--name-field-document-publication-date .field--item'))
-            )
-            publication_date = publication_date_element.text.strip()
-        except NoSuchElementException:
-            print(f"No publication date found for {url}")
-
-        try:
-            document_code_element = WebDriverWait(driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '.field--name-field-document-dsoc .field--item'))
-            )
-            document_code = document_code_element.text.strip()
-        except NoSuchElementException:
-            print(f"No document type found for {url}")
-
-        try:
-            open_link = driver.find_element(By.XPATH, "//a[contains(text(), 'Open')]")
-            pdf_href = open_link.get_attribute('href')
-        except NoSuchElementException:
-            try:
-                pdf_link = driver.find_element(By.XPATH, "//a[contains(@href, 'E.pdf') or contains(innerText, 'English') or contains(@href, 'e.pdf') or contains(@href, 'eng') and substring(@href, string-length(@href) - string-length('.pdf') + 1) = '.pdf']")
+             # Wait for all the links on the page to load
+            WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "a[href]")))
+            
+            # Find all links that end with .pdf
+            pdf_links = driver.find_elements(By.CSS_SELECTOR, "a[href$='.pdf']")
+    
+            for pdf_link in pdf_links:
                 pdf_href = pdf_link.get_attribute('href')
-            except NoSuchElementException:
-                print(f"Element not found for {url}. Skipping...")
-                continue
+                if pdf_href:
+                    # Add the .pdf href to the list
+                    publication['url'] = pdf_href
+                    time.sleep(2)
+
+                    break  
+        except NoSuchElementException:
+            print(f"No PDF date found for {url}. Skipping...") 
+            continue
 
         if pdf_href:
             document_data.append({
                 'url': pdf_href,
                 'title': title,
-                'summary': summary,
-                'document_name': name,
+                'resource_type': resource_type,
                 'created': publication_date,
-                'document_code': document_code,
-                'document_type': document_type
+                'document_type': 'Publication',
+                'Summary': summary
             })
             print(f"Completed processing {url}")
             time.sleep(4)
@@ -160,18 +186,12 @@ def process_urls(publications_url, driver):
     driver.quit()
     return document_data
 
-def generate_url(negotiation_stream):
-    """Generate and return the base URL for scraping."""
-    base_url = 'https://unfccc.int/decisions'
-    articles_per_page = 48
-    return f'{base_url}?search2={negotiation_stream}&items_per_page={articles_per_page}'
-
-def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
+def main_unfccc_crawler(driver, source, resource, negotiation_stream):
     """Main function to crawl, process, and upload data."""
-    all_urls = crawl_webpage(webpage, driver, negotiation_stream)
-    time.sleep(4)
+    all_urls = crawl_webpage(driver, 0,1)
+    time.sleep(1)
     print("All URLs returned")
-    time.sleep(4)
+    time.sleep(1)
     driver = setup_webdriver()
     full_urls = process_urls(all_urls, driver)
     print("Full URLs returned")
@@ -204,16 +224,15 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
                     pdf_document.close()
 
                     #Get metadata and other relevant information
-                    slug = item['document_code']
+                    slug = pdf_filename
                     title = item['title']
                     url = item['url']
-                    name = item['document_name']
                     created = reformat_date(item['created'])
                     document_type = item['document_type']
-                    document_code = item['document_code']
-                    category = source + ' - ' + resource
+                    resource_type = item['resource_type']
+                    category = source + ' - ' + resource_type
                     print("Category:", category)
-                    summary = item['summary']
+                    # summary = generate_summary_with_gpt3(text_content)
                     
                     output_filename = f"{pdf_filename}.txt"
                     blob_save = f'{negotiation_stream}/{source}/raw_{category_name}'
@@ -221,16 +240,15 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
 
                     metadata = {
                         'Title': title,
-                        'Name': name,
                         'Slug': slug,
                         'URL': url,
                         'Created': created,
                         'Type': document_type,
-                        'Code': document_code,
+                        'Resource Type': resource_type,
                         'Source': source,
                         'Resource': resource,
                         'Category': category,
-                        'Summary': summary
+                        # 'Summary': summary
                     }
                     blob_client = BlobClient.from_connection_string(
                         conn_str=connection_string,
@@ -247,17 +265,17 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
 
 def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
-    source = 'unfccc'
-    resource = 'decisions'
-    #negotiation_streams = ['agriculture', 'gender', 'finance']
-    negotiation_streams = ['finance'] # 
+    source = 'un_women'
+    resource = 'publications'
+    # negotiation_streams = ['agriculture', 'gender', 'finance']
+    negotiation_streams = ['gender'] # 
     for stream in negotiation_streams:
-        webpage = generate_url(stream)
+        # webpage = generate_url(stream)
         driver = setup_webdriver()
-        main_unfccc_crawler(driver, webpage, source=source, resource=resource, negotiation_stream=stream)
+        main_unfccc_crawler(driver, source=source, resource=resource, negotiation_stream=stream)
         driver = setup_webdriver() 
         conn = connect_database()
-        process_directory(conn, container_name, connection_string, f"{stream}/unfccc/raw_unfccc-decisions")
+        # process_directory(conn, container_name, connection_string, f"{stream}/unwomen/raw_un_women-publications")
 
 def main():
     load_dotenv()
@@ -266,8 +284,8 @@ def main():
     driver = setup_webdriver()
     #crawl and process data from the web
     crawl_and_process_data(driver, container_name, connection_string)  
-    # write to vector store  
-    write_to_vector(container_name,connection_string)
+    # # write to vector store  
+    # write_to_vector(container_name,connection_string)
 
 if __name__ == '__main__':
     main()

@@ -140,11 +140,11 @@ def write_to_db(conn, data):
         cursor = conn.cursor()
         #This is to ensure that the ids for articles remains sequential
         reset_sequence_query ="""
-        SELECT setval('public.article2_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article2\"), 1), false)""" # remember to switch to the app seq id
+        SELECT setval('public.article_test_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article_Test\"), 1), false)""" # remember to switch to the app seq id
         cursor.execute(reset_sequence_query)
 
         insert_query = """
-        INSERT INTO public."Article2" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
+        INSERT INTO public."Article_Test" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cursor.execute(insert_query, (
@@ -195,10 +195,10 @@ def process_directory(conn, container_name, connection_string, blob_directory_na
             current_metadata["Created"] = data['created_at']
 
             blob_client.set_blob_metadata(current_metadata)
-            print(data)
+            # print(data)
             
             # if data['url'] not in urls:
-            write_to_db(conn, data) # comment if you want to test
+            # write_to_db(conn, data) # comment if you want to test
             print(f"{len(data)} rows from {blob.name} written to postgres Article table")
         
             # else:
