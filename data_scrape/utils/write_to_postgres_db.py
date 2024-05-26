@@ -12,7 +12,7 @@ source_ids = {
     'raw_fao_koronivia': 2,
     'raw_unfccc-decisions': 3,
     'raw_wwf': 4,
-    'raw_un_women': 5,
+    'raw_un_women-publications': 5,
     'raw_gcf': 6,
     'raw_adaptation_fund': 7
 }
@@ -101,6 +101,7 @@ def extract_data_from_file(file_name, blob_client):
     if name:
         data['title'] = name + " - " + title
         data['title'] = data['title'][0:200]
+        print("title:", data['title'])
 
     slug = metadata.get('Slug')
     if slug:
@@ -140,11 +141,11 @@ def write_to_db(conn, data):
         cursor = conn.cursor()
         #This is to ensure that the ids for articles remains sequential
         reset_sequence_query ="""
-        SELECT setval('public.article_test_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article_Test\"), 1), false)""" # remember to switch to the app seq id
+        SELECT setval('public.article2_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article2\"), 1), false)""" # remember to switch to the app seq id
         cursor.execute(reset_sequence_query)
 
         insert_query = """
-        INSERT INTO public."Article_Test" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
+        INSERT INTO public."Article2" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cursor.execute(insert_query, (
@@ -198,7 +199,7 @@ def process_directory(conn, container_name, connection_string, blob_directory_na
             # print(data)
             
             # if data['url'] not in urls:
-            # write_to_db(conn, data) # comment if you want to test
+            write_to_db(conn, data) # comment if you want to test
             print(f"{len(data)} rows from {blob.name} written to postgres Article table")
         
             # else:

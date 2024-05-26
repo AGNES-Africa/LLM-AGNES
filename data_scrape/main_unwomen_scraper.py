@@ -42,6 +42,26 @@ def get_blob_client(negotiation_stream, source, category_name, filename):
     blob_path = f'{negotiation_stream}/{source}/{category_name}/{filename}'
     return container_client.get_blob_client(blob_path)
 
+def sanitise_metadata(metadata):
+    custom_weights = "-!#$%&*.^_|~+\"\'(),/`~0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]abcdefghijklmnopqrstuvwxyz{} "
+    MAX_METADATA_LENGTH = 255
+
+    def remove_illegal_chars(s):
+        sanitised = []
+        for c in s:
+            if c in custom_weights:
+                sanitised.append(c)
+            else:
+                print(f"Illegal character encountered and removed: {repr(c)}")
+        s = ''.join(sanitised)
+        # Remove control characters
+        s = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', s)
+        return s[:MAX_METADATA_LENGTH]  # Truncate to max length
+
+    print("Original metadata:", metadata)
+    sanitised_metadata = {remove_illegal_chars(key): remove_illegal_chars(str(value)) for key, value in metadata.items()}
+    print("Sanitised metadata:", sanitised_metadata)
+    return sanitised_metadata
 
 def crawl_webpage(driver, start, end):
     # options = webdriver.ChromeOptions()
@@ -79,27 +99,27 @@ def crawl_webpage(driver, start, end):
 
     # Resource type codes mapped to their names
     resource_type_map = {
-        # "Briefs": "2120",
-        # "Research papers": "2117",
-        # "Manuals/guides": "1410",
-        # "Data/statistics": "1411",
-        # "Assessments": "2105",
+        "Briefs": "2120",
+        "Research papers": "2117",
+        "Manuals/guides": "1410",
+        "Data/statistics": "1411",
+        "Assessments": "2105",
         # "Best practices": "2106",
         # "Discussion papers": "2111",
-        # "Case studies": "2108",
+        "Case studies": "2108",
         # "Policy papers": "2115",
         # "Evaluation reports": "2122",
         # "Institutional reports": "2123",
         # "Infographics": "2134",
         # "Brochures": "2131",
         # "Newsletters/magazines": "1435",
-        "Annual reports": "2119",
+        # "Annual reports": "2119",
         # "Issue papers": "2135",
         # "Resource kits": "2118",
         # "Proceedings": "2116",
         # "Project/programme reports": "1425",
         # "Intergovernmental reports": "2158",
-        # "Position reports": "1440",
+        "Position reports": "1440",
         # "Strategic plans": "2129",
         # "Flagship reports": "2112",
         # "Expert group meeting reports": "2154"
@@ -186,6 +206,12 @@ def process_urls(publications_url, driver):
     driver.quit()
     return document_data
 
+def sanitise_text(text):
+    """Sanitise the text content to remove unwanted characters."""
+    sanitised = text.replace('\xad', '').replace('\x0c', '').replace('\x0b', '').replace('\x0e', '')
+    sanitised = re.sub(r'\s+', ' ', sanitised)
+    return sanitised.strip()
+
 def main_unfccc_crawler(driver, source, resource, negotiation_stream):
     """Main function to crawl, process, and upload data."""
     all_urls = crawl_webpage(driver, 0,1)
@@ -223,6 +249,9 @@ def main_unfccc_crawler(driver, source, resource, negotiation_stream):
                         text_content+=page.get_text()
                     pdf_document.close()
 
+                    sanitised_text_content = sanitise_text(text_content)
+                    summary = generate_summary_with_gpt3(sanitised_text_content, 200)
+
                     #Get metadata and other relevant information
                     slug = pdf_filename
                     title = item['title']
@@ -230,9 +259,8 @@ def main_unfccc_crawler(driver, source, resource, negotiation_stream):
                     created = reformat_date(item['created'])
                     document_type = item['document_type']
                     resource_type = item['resource_type']
-                    category = source + ' - ' + resource_type
+                    category = "UN Women" + ' - ' + resource_type
                     print("Category:", category)
-                    # summary = generate_summary_with_gpt3(text_content)
                     
                     output_filename = f"{pdf_filename}.txt"
                     blob_save = f'{negotiation_stream}/{source}/raw_{category_name}'
@@ -240,23 +268,25 @@ def main_unfccc_crawler(driver, source, resource, negotiation_stream):
 
                     metadata = {
                         'Title': title,
+                        'Name': title,
                         'Slug': slug,
                         'URL': url,
                         'Created': created,
                         'Type': document_type,
-                        'Resource Type': resource_type,
+                        'ResourceType': resource_type,
                         'Source': source,
                         'Resource': resource,
                         'Category': category,
-                        # 'Summary': summary
+                        'Summary': summary
                     }
+                    sanitised_metadata = sanitise_metadata(metadata)
                     blob_client = BlobClient.from_connection_string(
                         conn_str=connection_string,
                         container_name=container_name,
                         blob_name=output_filepath
                     )
                     # Upload the PDF content directly to the blob
-                    blob_client.upload_blob(text_content, metadata=metadata, overwrite=True)
+                    blob_client.upload_blob(text_content, metadata=sanitised_metadata, overwrite=True)
                     print(f"Data for {pdf_filename} written to {output_filepath}")
                 except Exception as e:
                     print(f"URL file for {pdf_filename} could not be converted. Skipping...:{e}")
@@ -275,7 +305,7 @@ def crawl_and_process_data(driver, container_name, connection_string):
         main_unfccc_crawler(driver, source=source, resource=resource, negotiation_stream=stream)
         driver = setup_webdriver() 
         conn = connect_database()
-        # process_directory(conn, container_name, connection_string, f"{stream}/unwomen/raw_un_women-publications")
+        process_directory(conn, container_name, connection_string, f"{stream}/un_women/raw_un_women-publications")
 
 def main():
     load_dotenv()

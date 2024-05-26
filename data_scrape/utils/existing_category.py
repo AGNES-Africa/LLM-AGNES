@@ -25,7 +25,7 @@ def update_category_table(data, conn, blob_name):
     print(blob_name)
     metadata = blob_client.get_blob_properties().metadata
     print(metadata)
-    category_name = metadata.get('Category')
+    category_name = metadata.get('Category').lower()
     print(category_name)
     for idx, row in df.iterrows():
     #     category_name = row['category_name'].lower().strip()  # Ensure matching format

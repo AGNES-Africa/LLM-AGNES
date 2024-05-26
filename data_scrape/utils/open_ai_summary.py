@@ -15,31 +15,13 @@ def generate_summary_with_gpt3(text, max_length=200):
     This function sends the provided text to OpenAI's GPT-3 model to generate a summary.
     """
     llm = ChatOpenAI(temperature=0, model_name='gpt-3.5-turbo')
-    llm.get_num_tokens(text)
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=20)
     chunks = text_splitter.create_documents([text])
+    concatenated_text = " ".join([chunk.page_content for chunk in chunks])
     chain = load_summarize_chain(
-    llm,
-    chain_type='map_reduce',
-    verbose=False
+        llm,
+        chain_type='map_reduce',
+        verbose=False
     )
-    summary = chain.run(chunks, max_length=max_length)
-
+    summary = chain.run(input_documents=chunks)
     return summary
-
-def process_files(directory_path):
-    for file_path in Path(directory_path).glob('*.txt'):
-        with open(file_path, 'r') as file:
-            lines = file.readlines()
-        for i, line in enumerate(lines):
-            if line.startswith("Summary:"):
-                if not line.strip().endswith("Summary:"):  
-                    continue  
-                text = "".join(lines)
-                summary = generate_summary_with_gpt3(text, max_length=200)
-                
-                lines[i] = f"Summary: {summary}\n"
-                break
-        
-        with open(file_path, 'w') as file:
-            file.writelines(lines)
