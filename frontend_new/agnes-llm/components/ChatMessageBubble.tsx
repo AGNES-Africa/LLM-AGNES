@@ -13,25 +13,22 @@ export function ChatMessageBubble(props: { message: Message, aiEmoji?: string, s
       <div className="mr-2">
         {prefix}
       </div>
-      <div className="whitespace-pre-wrap flex flex-col">
-        <span>{props.message.content}</span>
+      <div className="whitespace-pre-wrap flex flex-col chatbubble_container">
+        <div className="flex flex-col chatbubble_child chatbubble_answer">{props.message.content}</div>
         {props.sources && props.sources.length ? <>
-          <code className="mt-4 mr-auto bg-slate-600 px-2 py-1 rounded">
-            <h2>
+          <div className="flex flex-col chatbubble_child wordwrap">
+            <br/><br/>
+            <h6>
               🔍 Sources:
-            </h2>
-          </code>
-          <code className="mt-1 mr-2 bg-slate-600 px-2 py-1 rounded text-xs">
+            </h6>
             {props.sources?.map((source, i) => (
               <div className="mt-2" key={"source:" + i}>
-                {i + 1}. &quot;{source.pageContent}&quot;{
-                  source.metadata?.loc?.lines !== undefined
-                    ? <div><br/>Lines {source.metadata?.loc?.lines?.from} to {source.metadata?.loc?.lines?.to}</div>
-                    : ""
-                  }
+                {i + 1}.{
+                  <a target="_blank" href={source} rel="noopener noreferrer">{source}</a>
+                }
               </div>
             ))}
-          </code>
+          </div>
         </> : ""}
       </div>
     </div>

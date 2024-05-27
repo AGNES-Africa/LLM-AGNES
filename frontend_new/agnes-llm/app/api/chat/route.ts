@@ -146,25 +146,17 @@ export async function POST(req: NextRequest) {
     });
 
     let sources:any = [];
-    let sources_str = ""
     if (res.context){
       if(res.context.length > 0){
         for (let i = 0; i < res.context.length; i++) {
           let metadata = res.context[i].metadata
           if(!sources.includes(metadata)){
             sources.push(metadata)
-            sources_str +=  metadata + "\n";
           }
-          
         }
       }
     }
-
-    const response = new NextResponse(
-      res.answer+"\n\nSources:\n"+sources_str   
-      
-    );
-    return response;
+    return NextResponse.json({ answer: res.answer, sources: sources });
   } catch (e: any) {
     return NextResponse.json({ error: e.message }, { status: e.status ?? 500 });
   }

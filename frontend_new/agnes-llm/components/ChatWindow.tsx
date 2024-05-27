@@ -36,6 +36,7 @@ export function ChatWindow(props: {
   );
 
   const [sourcesForMessages, setSourcesForMessages] = useState<Record<string, any>>({});
+  const [docSources, setDocSources] = useState<Array<string>>([]);
 
   const { messages, input, setInput, handleInputChange, handleSubmit, isLoading: chatEndpointIsLoading, setMessages } =
     useChat({
@@ -66,42 +67,33 @@ export function ChatWindow(props: {
     if (chatEndpointIsLoading ?? intermediateStepsLoading) {
       return;
     }
-    if (!showIntermediateSteps) {
-      handleSubmit(e);
+    //if (!showIntermediateSteps) {
+    //  handleSubmit(e);
     // Some extra work to show intermediate steps properly
+    //} else {
+    setIntermediateStepsLoading(true);
+    setInput("");
+    const messagesWithUserReply = messages.concat({ id: messages.length.toString(), content: input, role: "user" });
+    setMessages(messagesWithUserReply);
+    const response = await fetch(endpoint, {
+      method: "POST",
+      body: JSON.stringify({
+        messages: messagesWithUserReply
+      })
+    });
+    const json = await response.json();
+    setIntermediateStepsLoading(false);
+    if (response.status === 200) {
+      // Represent intermediate steps as system messages for display purposes 
+      const newMessages = messagesWithUserReply;
+      setSourcesForMessages({...sourcesForMessages, [(newMessages.length).toString()]: json.sources});
+      setMessages([...newMessages, { id: (newMessages.length).toString(), content: json.answer, role: "assistant" }]);
     } else {
-      setIntermediateStepsLoading(true);
-      setInput("");
-      const messagesWithUserReply = messages.concat({ id: messages.length.toString(), content: input, role: "user" });
-      setMessages(messagesWithUserReply);
-      const response = await fetch(endpoint, {
-        method: "POST",
-        body: JSON.stringify({
-          messages: messagesWithUserReply,
-          show_intermediate_steps: true
-        })
-      });
-      const json = await response.json();
-      setIntermediateStepsLoading(false);
-      if (response.status === 200) {
-        // Represent intermediate steps as system messages for display purposes
-        const intermediateStepMessages = (json.intermediate_steps ?? []).map((intermediateStep: AgentStep, i: number) => {
-          return {id: (messagesWithUserReply.length + i).toString(), content: JSON.stringify(intermediateStep), role: "system"};
+      if (json.error) {
+        toast(json.error, {
+          theme: "dark"
         });
-        const newMessages = messagesWithUserReply;
-        for (const message of intermediateStepMessages) {
-          newMessages.push(message);
-          setMessages([...newMessages]);
-          await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1000));
-        }
-        setMessages([...newMessages, { id: (newMessages.length + intermediateStepMessages.length).toString(), content: json.output, role: "assistant" }]);
-      } else {
-        if (json.error) {
-          toast(json.error, {
-            theme: "dark"
-          });
-          throw new Error(json.error);
-        }
+        throw new Error(json.error);
       }
     }
   }

@@ -169,3 +169,23 @@ li {
 	background: #edf1f5  !important;
 	color: #333 !important;
 }
+
+.chatbubble_container{
+	overflow: hidden;
+}
+
+.chatbubble_child{
+	width: 100% !important;
+}
+
+.chatbubble_answer{
+	text-align: justify;
+}
+
+.wordwrap { 
+	white-space: pre-wrap;      /* CSS3 */   
+	white-space: -moz-pre-wrap; /* Firefox */    
+	white-space: -pre-wrap;     /* Opera <7 */   
+	white-space: -o-pre-wrap;   /* Opera 7 */    
+	word-wrap: break-word;      /* IE */
+ }
