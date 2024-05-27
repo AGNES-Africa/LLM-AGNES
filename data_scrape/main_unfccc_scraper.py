@@ -17,19 +17,37 @@ from utils.existing_urls import *
 from utils.reformat_date import *
 import fitz
 from utils.write_to_vector_db import *
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+
+# def setup_webdriver():
+#     """Initialise and return a configured instance of a Chrome WebDriver."""
+#     options = webdriver.ChromeOptions()
+#     prefs = {
+#         "plugins.always_authorize": True,
+#         "download.prompt_for_download": False,
+#         "download.directory_upgrade": True,
+#         "plugins.always_open_pdf_externally": True
+#     }
+#     options.add_experimental_option("prefs", prefs)
+#     # driver_path = os.getenv("DRIVER_PATH")
+#     return webdriver.Chrome(options=options)
 
 def setup_webdriver():
-    """Initialise and return a configured instance of a Chrome WebDriver."""
+    """
+    Setup and return a Selenium WebDriver with human-like behavior.
+    """
     options = webdriver.ChromeOptions()
-    prefs = {
-        "plugins.always_authorize": True,
-        "download.prompt_for_download": False,
-        "download.directory_upgrade": True,
-        "plugins.always_open_pdf_externally": True
-    }
-    options.add_experimental_option("prefs", prefs)
-    # driver_path = os.getenv("DRIVER_PATH")
-    return webdriver.Chrome(options=options)
+    options.add_argument("start-maximized")
+    options.add_argument("disable-infobars")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--remote-debugging-port=9222")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    return driver
 
 def connect_database():
     """Establish and return a database connection using the connection string from environment variables."""
@@ -42,6 +60,42 @@ def get_blob_client(negotiation_stream, source, category_name, filename):
     container_client = blob_service_client.get_container_client(container_name)
     blob_path = f'{negotiation_stream}/{source}/{category_name}/{filename}'
     return container_client.get_blob_client(blob_path)
+
+def sanitise_metadata(metadata):
+    """
+    Sanitise metadata by removing illegal characters.
+    """
+    custom_weights = "-!#$%&*.^_|~+\"\'(),/`~0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[]abcdefghijklmnopqrstuvwxyz{} "
+    
+    def remove_illegal_chars(s):
+        # Remove characters not in custom_weights
+        s = ''.join(c for c in s if c in custom_weights or c == ' ')
+        # Remove control characters
+        s = re.sub(r'[\x00-\x1F\x7F-\x9F]', '', s)
+        return s[:255]  # Truncate to max length
+
+    sanitised_metadata = {remove_illegal_chars(key): remove_illegal_chars(str(value)) for key, value in metadata.items()}
+    return sanitised_metadata
+
+def extract_decisions(text):
+    """
+    Extract decisions from the given text. Decisions start with "Decision" followed by a space and a number.
+    """
+    # Regular expression to match "Decision" followed by a space and a number
+    decision_pattern = re.compile(r'Decision\s+\d+/CP\.\d+')
+    
+    # Find all matches for the decision pattern
+    matches = list(re.finditer(decision_pattern, text))
+    
+    # Extract the decisions using the positions of the matches
+    decisions = []
+    for i in range(len(matches)):
+        start = matches[i].start()
+        end = matches[i+1].start() if i+1 < len(matches) else len(text)
+        decision_text = text[start:end].strip()
+        decisions.append(decision_text)
+    
+    return decisions
 
 def crawl_webpage(base_url, driver, stream):
     """Crawl the webpage, collect document links, and handle 'Load More' button dynamically."""
@@ -160,11 +214,18 @@ def process_urls(publications_url, driver):
     driver.quit()
     return document_data
 
+def sanitise_text(text):
+    """Sanitise the text content to remove unwanted characters."""
+    sanitised = text.replace('\xad', '').replace('\x0c', '').replace('\x0b', '').replace('\x0e', '')
+    sanitised = re.sub(r'\s+', ' ', sanitised)
+    return sanitised.strip()
+
 def generate_url(negotiation_stream):
     """Generate and return the base URL for scraping."""
     base_url = 'https://unfccc.int/decisions'
     articles_per_page = 48
     return f'{base_url}?search2={negotiation_stream}&items_per_page={articles_per_page}'
+ 
 
 def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
     """Main function to crawl, process, and upload data."""
@@ -177,6 +238,8 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
     print("Full URLs returned")
     time.sleep(4)
     category_name = source + '-' + resource
+    staging_dir = f"staging_{category_name}"
+    os.makedirs(staging_dir, exist_ok=True)
 
     upload_file_to_blob(full_urls, negotiation_stream, source, category_name)
     time.sleep(2)
@@ -187,33 +250,71 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
     for item in full_urls:
         pdf_url = item['url']
         pdf_filename = f"{counter}_{pdf_url.split('/')[-1]}"
-        counter +=1
+        counter += 1
         
         if pdf_filename.lower().endswith('.pdf'):
             # Download the PDF content directly without saving locally
-            response = requests.get(pdf_url, headers=headers)
-            time.sleep(3)
+            response = requests.get(pdf_url)
+            time.sleep(4)
             pdf_content = response.content
 
             if pdf_content:
                 try:
+                    # Check if the content is a valid PDF
+                    if pdf_content[:4] != b'%PDF':
+                        raise ValueError("Invalid PDF format")
+
                     pdf_document = fitz.open('pdf', pdf_content)
                     text_content = ''
                     for page in pdf_document:
-                        text_content+=page.get_text()
+                        text_content += page.get_text()
                     pdf_document.close()
 
-                    #Get metadata and other relevant information
-                    slug = item['document_code']
+                    if not text_content.strip():
+                        raise ValueError("No text found in PDF")
+
+                    sanitised_text_content = sanitise_text(text_content)
+                    decisions = extract_decisions(sanitised_text_content)
+
+                    # Store decisions in memory and upload directly
+                    for i, decision in enumerate(decisions):
+                        decision_filename = f"decision_{i+1}.txt"
+
+                        # Upload each decision to the blob with metadata
+                        decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
+                        decision_metadata = {
+                            'Title': item['title'],
+                            'Name': item.get('document_name', ''),
+                            'Slug': decision_filename,
+                            'URL': item['url'],
+                            'Created': reformat_date(item['created']),
+                            'Type': item.get('document_type', 'Publication'),
+                            'Code': item.get('document_code', ''),
+                            'Source': source,
+                            'Resource': resource,
+                            'Category': 'unfccc - decisions',
+                            'Summary': item.get('summary', '')
+                        }
+                        decision_sanitised_metadata = sanitise_metadata(decision_metadata)
+                        decision_blob_client = BlobClient.from_connection_string(
+                            conn_str=connection_string,
+                            container_name=container_name,
+                            blob_name=decision_blob_path
+                        )
+                        decision_blob_client.upload_blob(decision, metadata=decision_sanitised_metadata, overwrite=True)
+                        print(f"Decision {decision_filename} written to {decision_blob_path}")
+
+                    # Get metadata and other relevant information
+                    slug = item.get('document_code', '')
                     title = item['title']
                     url = item['url']
-                    name = item['document_name']
+                    name = item.get('document_name', '')
                     created = reformat_date(item['created'])
-                    document_type = item['document_type']
-                    document_code = item['document_code']
+                    document_type = item.get('document_type', 'Publication')
+                    document_code = item.get('document_code', '')
                     category = source + ' - ' + resource
                     print("Category:", category)
-                    summary = item['summary']
+                    summary = item.get('summary', '')
                     
                     output_filename = f"{pdf_filename}.txt"
                     blob_save = f'{negotiation_stream}/{source}/raw_{category_name}'
@@ -232,25 +333,28 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
                         'Category': category,
                         'Summary': summary
                     }
+                    sanitised_metadata = sanitise_metadata(metadata)
                     blob_client = BlobClient.from_connection_string(
                         conn_str=connection_string,
                         container_name=container_name,
                         blob_name=output_filepath
                     )
-                    # Upload the PDF content directly to the blob
-                    blob_client.upload_blob(text_content, metadata=metadata, overwrite=True)
+                    # Upload the combined PDF content directly to the blob
+                    blob_client.upload_blob(sanitised_text_content, metadata=sanitised_metadata, overwrite=True)
                     print(f"Data for {pdf_filename} written to {output_filepath}")
-                except Exception as e:
+
+                except (fitz.FileDataError, ValueError) as e:
                     print(f"URL file for {pdf_filename} could not be converted. Skipping...:{e}")
             else:
                 print(f"Failed to extract text from {pdf_filename}")
+
 
 def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
     source = 'unfccc'
     resource = 'decisions'
     #negotiation_streams = ['agriculture', 'gender', 'finance']
-    negotiation_streams = ['finance'] # 
+    negotiation_streams = ['agriculture'] # 
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
@@ -267,7 +371,7 @@ def main():
     #crawl and process data from the web
     crawl_and_process_data(driver, container_name, connection_string)  
     # write to vector store  
-    write_to_vector(container_name,connection_string)
+    # write_to_vector(container_name,connection_string)
 
 if __name__ == '__main__':
     main()

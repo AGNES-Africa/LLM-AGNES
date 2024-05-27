@@ -10,7 +10,7 @@ load_dotenv()
 api_key = os.getenv('OPEN_API_KEY')
 os.environ["OPENAI_API_KEY"]=api_key
 
-def generate_summary_with_gpt3(text, max_length=200):
+def generate_summary_with_gpt3(text):
     """
     This function sends the provided text to OpenAI's GPT-3 model to generate a summary.
     """

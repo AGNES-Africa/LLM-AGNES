@@ -25,3 +25,4 @@ psycopg
 langchain_postgres
 unstructured
 timescale-vector
+webdriver-manager==4.0.1

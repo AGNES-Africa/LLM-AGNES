@@ -9,7 +9,7 @@ from azure.storage.blob import BlobServiceClient
 #Define source id dictionary
 source_ids = {
     'raw_ipcc': 1,
-    'raw_fao_koronivia': 2,
+    'raw_fao_koronivia-publications': 2,
     'raw_unfccc-decisions': 3,
     'raw_wwf': 4,
     'raw_un_women-publications': 5,
@@ -199,7 +199,7 @@ def process_directory(conn, container_name, connection_string, blob_directory_na
             # print(data)
             
             # if data['url'] not in urls:
-            write_to_db(conn, data) # comment if you want to test
+            # write_to_db(conn, data) # comment if you want to test
             print(f"{len(data)} rows from {blob.name} written to postgres Article table")
         
             # else:
