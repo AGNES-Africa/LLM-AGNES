@@ -35,8 +35,7 @@ const convertVercelMessageToLangChainMessage = (message: VercelChatMessage) => {
   }
 };
 
-const AGENT_SYSTEM_TEMPLATE = `You are an expert on climate change negotiations. Answer the user's questions based on the context below:
-
+const AGENT_SYSTEM_TEMPLATE = `You are an expert on climate change negotiations. You should only answer questions based on the context below. Don't make up answers. If you do not know the answer, ask the user to rephrase his/her question.
 <context>
 {context}
 </context>
@@ -146,12 +145,15 @@ export async function POST(req: NextRequest) {
     });
 
     let sources:any = [];
-    if (res.context){
-      if(res.context.length > 0){
-        for (let i = 0; i < res.context.length; i++) {
-          let metadata = res.context[i].metadata
-          if(!sources.includes(metadata)){
-            sources.push(metadata)
+
+    if((!res.answer.toLowerCase().includes("if you have any questions")) && (!res.answer.includes("rephrase")) && (!res.answer.includes("cannot provide")) && (!res.answer.includes("can't provide"))&& (!res.answer.includes("sorry"))&& (!res.answer.toLowerCase().includes("feel free"))){
+      if (res.context){
+        if(res.context.length > 0){
+          for (let i = 0; i < res.context.length; i++) {
+            let metadata = res.context[i].metadata
+            if(!sources.includes(metadata)){
+              sources.push(metadata)
+            }
           }
         }
       }
