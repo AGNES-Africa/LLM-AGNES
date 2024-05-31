@@ -72,19 +72,18 @@ def sanitise_metadata(metadata):
     return sanitised_metadata
 
 def extract_decision(text, symbol):
-    """Extract decisions from the given text. Only include decisions matching the symbol."""
-    # Sanitise text to ensure it's clean for processing
-    text = sanitise_text(text)
+    """
+    Extract decisions that match the given symbol.
+    """
+    # Regular expression to match "Decision" followed by the specific symbol
+    decision_pattern = re.compile(rf'(Decision\s+{re.escape(symbol)}.*?)((?=Decision\s+\d+/\w+\.\d+)|$)', re.DOTALL)
 
-    # Pattern to match the decision block
-    decision_pattern = re.compile(r'(Decision\s+\d+/\w+\.\d+\n.*?)(?=Decision\s+\d+/\w+\.\d+\n|$)', re.DOTALL)
+    # Find all matches for the decision pattern
+    decisions = decision_pattern.findall(text)
     
-    # Find all decision blocks
-    matches = re.findall(decision_pattern, text)
-    
-    # Filter decisions by symbol
-    decision = [match for match in matches if symbol in match]
-    decision = ''.join(decision)
+    # Extract the decisions using the positions of the matches
+    decision_texts = [match[0].strip() for match in decisions]
+    decision = ''.join(decision_texts)
     
     return decision
 
@@ -146,7 +145,7 @@ def urls_set(all_urls):
 
 def process_urls(publications_url, driver):
     """Process each URL to extract necessary information and download PDFs."""
-    publications_url = urls_set(publications_url)
+    # publications_url = urls_set(publications_url)
     print(f"Processing {len(publications_url)} URLs...")
     document_data = []
 
@@ -243,45 +242,45 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
         symbol = item.get('document_name')
         print("symbol:", symbol)
         title = item.get('title')
-        decision_text = extract_decision(text_content, symbol)
-
+        if 'resolution' not in title.lower():
+            decision_text = extract_decision(text_content, symbol)
             # Store decisions in memory and upload directly
-        if decision_text:
-            file_name = (title+ '-' + symbol).replace(' ', '_',).replace('/', '_')
-            decision_filename = f"{file_name}.txt"
-            print("decision file name:", decision_filename)
-            # Upload each decision to the blob with metadata
-            decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
-            decision_metadata = {
-                'Title': title,
-                'Name': symbol,
-                'Slug': decision_filename,
-                'URL': item['url'],
-                'Created': reformat_date(item['created']),
-                'Type': item.get('document_type', 'Publication'),
-                'Code': item.get('document_code', ''),
-                'Source': source,
-                'Resource': resource,
-                'Category': 'unfccc - decisions',
-                'Summary': item.get('summary', '')
-            }
-            decision_sanitised_metadata = sanitise_metadata(decision_metadata)
-            decision_blob_client = BlobClient.from_connection_string(
-                conn_str=connection_string,
-                container_name=container_name,
-                blob_name=decision_blob_path
-            )
-            decision_blob_client.upload_blob(decision_text, metadata=decision_sanitised_metadata, overwrite=True)
-            print(f"Decision {decision_filename} written to {decision_blob_path}")
-        # driver.quit()
+            if decision_text:
+                file_name = (title+ '-' + symbol).replace(' ', '_',).replace('/', '_')
+                decision_filename = f"{file_name}.txt"
+                print("decision file name:", decision_filename)
+                # Upload each decision to the blob with metadata
+                decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
+                decision_metadata = {
+                    'Title': title,
+                    'Name': symbol,
+                    'Slug': decision_filename,
+                    'URL': item['url'],
+                    'Created': reformat_date(item['created']),
+                    'Type': item.get('document_type', 'Publication'),
+                    'Code': item.get('document_code', ''),
+                    'Source': source,
+                    'Resource': resource,
+                    'Category': 'unfccc - decisions',
+                    'Summary': item.get('summary', '')
+                }
+                decision_sanitised_metadata = sanitise_metadata(decision_metadata)
+                decision_blob_client = BlobClient.from_connection_string(
+                    conn_str=connection_string,
+                    container_name=container_name,
+                    blob_name=decision_blob_path
+                )
+                decision_blob_client.upload_blob(decision_text, metadata=decision_sanitised_metadata, overwrite=True)
+                print(f"Decision {decision_filename} written to {decision_blob_path}")
+            # driver.quit()
 
 
 def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
     source = 'unfccc'
     resource = 'decisions'
-    # negotiation_streams = ['agriculture', 'gender', 'finance']
-    negotiation_streams = ['finance'] # 
+    negotiation_streams = ['agriculture', 'gender', 'finance']
+    # negotiation_streams = ['gender'] # 
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
