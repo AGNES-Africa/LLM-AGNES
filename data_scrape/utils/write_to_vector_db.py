@@ -37,7 +37,7 @@ def write_to_vector(blob_container_name, blob_connection_string):
     count = 1
 
     for blob in container_client.list_blobs():
-        if blob.name.endswith('.txt'):
+        if (blob.name.endswith('.txt') and ("raw_unfccc-decisions" in blob.name)):
             normalised_name = normalise_blob_name(blob.name)
             if normalised_name not in processed_blobs:
                 processed_blobs[normalised_name] = True
@@ -48,8 +48,13 @@ def write_to_vector(blob_container_name, blob_connection_string):
                 documents = loader.load()
 
                 cursor.execute(
-                    "INSERT INTO embed.llm_documents (id, title, url) VALUES (%s, %s, %s)",
-                    (count, (metadata.get('Summary'))[0:200], metadata.get('URL', 'Default URL'))
+                    "INSERT INTO embed.llm_documents (id, title, title_vector, url) VALUES (%s, %s, %s, %s)",
+                    (
+                        count, 
+                        (metadata.get('Summary'))[0:200], 
+                        embedding.embed_query(metadata.get('Summary')),
+                        metadata.get('URL', 'Default URL')
+                    )
                 )
 
                 for document in documents:
