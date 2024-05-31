@@ -8,28 +8,28 @@ from azure.storage.blob import BlobServiceClient
 
 #Define source id dictionary
 source_ids = {
-    'raw_ipcc': 1,
-    'raw_fao_koronivia-publications': 2,
-    'raw_unfccc-decisions': 3,
-    'raw_wwf': 4,
-    'raw_un_women-publications': 5,
-    'raw_gcf': 6,
-    'raw_adaptation_fund': 7
+    'staging_ipcc': 1,
+    'staging_fao_koronivia-publications': 2,
+    'staging_unfccc-decisions': 3,
+    'staging_wwf': 4,
+    'staging_un_women-publications': 5,
+    'staging_gcf': 6,
+    'staging_adaptation_fund': 7
 }
 
 
 # Define resource id pattern
 resource_patterns = [
-    ('raw_ipcc', 'gender', 8),
-    ('raw_unfccc', 'agriculture', 2),
-    ('raw_fao_koronivia', 'agriculture', 3),
-    ('raw_wwf', 'agriculture', 4),
-    ('raw_ipcc', 'agriculture', 5),
-    ('raw_unfccc', 'gender', 6),
-    ('raw_un_women', 'gender', 7),
-    ('raw_gcf', 'finance', 9),
-    ('raw_adaptation_fund', 'finance', 10),
-    ('raw_unfccc', 'finance', 11)
+    ('staging_ipcc', 'gender', 8),
+    ('staging_unfccc', 'agriculture', 2),
+    ('staging_fao_koronivia', 'agriculture', 3),
+    ('staging_wwf', 'agriculture', 4),
+    ('staging_ipcc', 'agriculture', 5),
+    ('staging_unfccc', 'gender', 6),
+    ('staging_un_women', 'gender', 7),
+    ('staging_gcf', 'finance', 9),
+    ('staging_adaptation_fund', 'finance', 10),
+    ('staging_unfccc', 'finance', 11)
 ]
 
 def get_ref_id(file_path):
@@ -141,7 +141,7 @@ def write_to_db(conn, data):
         cursor = conn.cursor()
         #This is to ensure that the ids for articles remains sequential
         reset_sequence_query ="""
-        SELECT setval('public.article2_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article2\"), 1), false)""" # remember to switch to the app seq id
+        SELECT setval('public.Article2_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article2\"), 1), false)""" # remember to switch to the app seq id
         cursor.execute(reset_sequence_query)
 
         insert_query = """

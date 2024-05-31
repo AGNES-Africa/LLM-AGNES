@@ -19,19 +19,7 @@ import fitz
 from utils.write_to_vector_db import *
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
-
-# def setup_webdriver():
-#     """Initialise and return a configured instance of a Chrome WebDriver."""
-#     options = webdriver.ChromeOptions()
-#     prefs = {
-#         "plugins.always_authorize": True,
-#         "download.prompt_for_download": False,
-#         "download.directory_upgrade": True,
-#         "plugins.always_open_pdf_externally": True
-#     }
-#     options.add_experimental_option("prefs", prefs)
-#     # driver_path = os.getenv("DRIVER_PATH")
-#     return webdriver.Chrome(options=options)
+import random
 
 def setup_webdriver():
     """
@@ -53,6 +41,12 @@ def connect_database():
     """Establish and return a database connection using the connection string from environment variables."""
     conn_str = get_uri()
     return psycopg2.connect(conn_str)
+
+def adjusted_delay(min_delay=1, max_delay=3):
+    """
+    Introduce a random delay to mimic human interaction.
+    """
+    time.sleep(random.uniform(min_delay, max_delay))
 
 def get_blob_client(negotiation_stream, source, category_name, filename):
     """Return a BlobClient for a given file path in blob storage."""
@@ -77,29 +71,27 @@ def sanitise_metadata(metadata):
     sanitised_metadata = {remove_illegal_chars(key): remove_illegal_chars(str(value)) for key, value in metadata.items()}
     return sanitised_metadata
 
-def extract_decisions(text):
-    """
-    Extract decisions from the given text. Decisions start with "Decision" followed by a space and a number.
-    """
-    # Regular expression to match "Decision" followed by a space and a number
-    decision_pattern = re.compile(r'Decision\s+\d+/CP\.\d+')
+def extract_decision(text, symbol):
+    """Extract decisions from the given text. Only include decisions matching the symbol."""
+    # Sanitise text to ensure it's clean for processing
+    text = sanitise_text(text)
+
+    # Pattern to match the decision block
+    decision_pattern = re.compile(r'(Decision\s+\d+/\w+\.\d+\n.*?)(?=Decision\s+\d+/\w+\.\d+\n|$)', re.DOTALL)
     
-    # Find all matches for the decision pattern
-    matches = list(re.finditer(decision_pattern, text))
+    # Find all decision blocks
+    matches = re.findall(decision_pattern, text)
     
-    # Extract the decisions using the positions of the matches
-    decisions = []
-    for i in range(len(matches)):
-        start = matches[i].start()
-        end = matches[i+1].start() if i+1 < len(matches) else len(text)
-        decision_text = text[start:end].strip()
-        decisions.append(decision_text)
+    # Filter decisions by symbol
+    decision = [match for match in matches if symbol in match]
+    decision = ''.join(decision)
     
-    return decisions
+    return decision
 
 def crawl_webpage(base_url, driver, stream):
     """Crawl the webpage, collect document links, and handle 'Load More' button dynamically."""
     driver.get(base_url)
+    adjusted_delay(4, 6)
     webpage_urls = []
 
     def scrape_data():
@@ -124,7 +116,7 @@ def crawl_webpage(base_url, driver, stream):
                 load_more_button = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Load More')))
                 if load_more_button and load_more_button.is_displayed():
                     load_more_button.send_keys(Keys.ENTER)
-                    time.sleep(10)
+                    adjusted_delay(6, 10)
                     scrape_data()  # Scrape hrefs loaded each time load more button is pressed
                     count += 1
             except TimeoutException:
@@ -154,6 +146,7 @@ def urls_set(all_urls):
 
 def process_urls(publications_url, driver):
     """Process each URL to extract necessary information and download PDFs."""
+    publications_url = urls_set(publications_url)
     print(f"Processing {len(publications_url)} URLs...")
     document_data = []
 
@@ -205,19 +198,24 @@ def process_urls(publications_url, driver):
                 'document_type': document_type
             })
             print(f"Completed processing {url}")
-            time.sleep(4)
+            adjusted_delay(4, 6)
         else:
             print(f"No PDF link found for {url}")
 
-        time.sleep(1)
+        adjusted_delay(2, 4)
 
     driver.quit()
     return document_data
 
 def sanitise_text(text):
-    """Sanitise the text content to remove unwanted characters."""
+    """Sanitise the text content to remove unwanted characters, keeping new lines."""
+    # Remove unwanted characters
     sanitised = text.replace('\xad', '').replace('\x0c', '').replace('\x0b', '').replace('\x0e', '')
-    sanitised = re.sub(r'\s+', ' ', sanitised)
+    
+    # Replace multiple spaces with a single space, but keep new lines
+    sanitised = re.sub(r'[ \t]+', ' ', sanitised)
+    sanitised = re.sub(r'(\s*\n\s*)+', '\n', sanitised)
+    
     return sanitised.strip()
 
 def generate_url(negotiation_stream):
@@ -225,149 +223,78 @@ def generate_url(negotiation_stream):
     base_url = 'https://unfccc.int/decisions'
     articles_per_page = 48
     return f'{base_url}?search2={negotiation_stream}&items_per_page={articles_per_page}'
- 
 
 def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
     """Main function to crawl, process, and upload data."""
     all_urls = crawl_webpage(webpage, driver, negotiation_stream)
-    time.sleep(4)
+    adjusted_delay(4, 6)
     print("All URLs returned")
-    time.sleep(4)
+    adjusted_delay(4, 6)
     driver = setup_webdriver()
+    adjusted_delay(4, 6)
     full_urls = process_urls(all_urls, driver)
     print("Full URLs returned")
-    time.sleep(4)
+    adjusted_delay(4, 6)
     category_name = source + '-' + resource
     staging_dir = f"staging_{category_name}"
     os.makedirs(staging_dir, exist_ok=True)
 
-    upload_file_to_blob(full_urls, negotiation_stream, source, category_name)
-    time.sleep(2)
-    driver.quit()
-    print(f"Downloaded all files to {category_name}")
-    
-    counter = 1
-    for item in full_urls:
-        pdf_url = item['url']
-        pdf_filename = f"{counter}_{pdf_url.split('/')[-1]}"
-        counter += 1
-        
-        if pdf_filename.lower().endswith('.pdf'):
-            # Download the PDF content directly without saving locally
-            response = requests.get(pdf_url)
-            time.sleep(4)
-            pdf_content = response.content
+    for item, text_content in upload_file_to_blob(full_urls, negotiation_stream, source, category_name):
+        symbol = item.get('document_name')
+        print("symbol:", symbol)
+        title = item.get('title')
+        decision_text = extract_decision(text_content, symbol)
 
-            if pdf_content:
-                try:
-                    # Check if the content is a valid PDF
-                    if pdf_content[:4] != b'%PDF':
-                        raise ValueError("Invalid PDF format")
-
-                    pdf_document = fitz.open('pdf', pdf_content)
-                    text_content = ''
-                    for page in pdf_document:
-                        text_content += page.get_text()
-                    pdf_document.close()
-
-                    if not text_content.strip():
-                        raise ValueError("No text found in PDF")
-
-                    sanitised_text_content = sanitise_text(text_content)
-                    decisions = extract_decisions(sanitised_text_content)
-
-                    # Store decisions in memory and upload directly
-                    for i, decision in enumerate(decisions):
-                        decision_filename = f"decision_{i+1}.txt"
-
-                        # Upload each decision to the blob with metadata
-                        decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
-                        decision_metadata = {
-                            'Title': item['title'],
-                            'Name': item.get('document_name', ''),
-                            'Slug': decision_filename,
-                            'URL': item['url'],
-                            'Created': reformat_date(item['created']),
-                            'Type': item.get('document_type', 'Publication'),
-                            'Code': item.get('document_code', ''),
-                            'Source': source,
-                            'Resource': resource,
-                            'Category': 'unfccc - decisions',
-                            'Summary': item.get('summary', '')
-                        }
-                        decision_sanitised_metadata = sanitise_metadata(decision_metadata)
-                        decision_blob_client = BlobClient.from_connection_string(
-                            conn_str=connection_string,
-                            container_name=container_name,
-                            blob_name=decision_blob_path
-                        )
-                        decision_blob_client.upload_blob(decision, metadata=decision_sanitised_metadata, overwrite=True)
-                        print(f"Decision {decision_filename} written to {decision_blob_path}")
-
-                    # Get metadata and other relevant information
-                    slug = item.get('document_code', '')
-                    title = item['title']
-                    url = item['url']
-                    name = item.get('document_name', '')
-                    created = reformat_date(item['created'])
-                    document_type = item.get('document_type', 'Publication')
-                    document_code = item.get('document_code', '')
-                    category = source + ' - ' + resource
-                    print("Category:", category)
-                    summary = item.get('summary', '')
-                    
-                    output_filename = f"{pdf_filename}.txt"
-                    blob_save = f'{negotiation_stream}/{source}/raw_{category_name}'
-                    output_filepath = f'{blob_save}/{output_filename}'
-
-                    metadata = {
-                        'Title': title,
-                        'Name': name,
-                        'Slug': slug,
-                        'URL': url,
-                        'Created': created,
-                        'Type': document_type,
-                        'Code': document_code,
-                        'Source': source,
-                        'Resource': resource,
-                        'Category': category,
-                        'Summary': summary
-                    }
-                    sanitised_metadata = sanitise_metadata(metadata)
-                    blob_client = BlobClient.from_connection_string(
-                        conn_str=connection_string,
-                        container_name=container_name,
-                        blob_name=output_filepath
-                    )
-                    # Upload the combined PDF content directly to the blob
-                    blob_client.upload_blob(sanitised_text_content, metadata=sanitised_metadata, overwrite=True)
-                    print(f"Data for {pdf_filename} written to {output_filepath}")
-
-                except (fitz.FileDataError, ValueError) as e:
-                    print(f"URL file for {pdf_filename} could not be converted. Skipping...:{e}")
-            else:
-                print(f"Failed to extract text from {pdf_filename}")
+            # Store decisions in memory and upload directly
+        if decision_text:
+            file_name = (title+ '-' + symbol).replace(' ', '_',).replace('/', '_')
+            decision_filename = f"{file_name}.txt"
+            print("decision file name:", decision_filename)
+            # Upload each decision to the blob with metadata
+            decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
+            decision_metadata = {
+                'Title': title,
+                'Name': symbol,
+                'Slug': decision_filename,
+                'URL': item['url'],
+                'Created': reformat_date(item['created']),
+                'Type': item.get('document_type', 'Publication'),
+                'Code': item.get('document_code', ''),
+                'Source': source,
+                'Resource': resource,
+                'Category': 'unfccc - decisions',
+                'Summary': item.get('summary', '')
+            }
+            decision_sanitised_metadata = sanitise_metadata(decision_metadata)
+            decision_blob_client = BlobClient.from_connection_string(
+                conn_str=connection_string,
+                container_name=container_name,
+                blob_name=decision_blob_path
+            )
+            decision_blob_client.upload_blob(decision_text, metadata=decision_sanitised_metadata, overwrite=True)
+            print(f"Decision {decision_filename} written to {decision_blob_path}")
+        # driver.quit()
 
 
 def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
     source = 'unfccc'
     resource = 'decisions'
-    #negotiation_streams = ['agriculture', 'gender', 'finance']
-    negotiation_streams = ['agriculture'] # 
+    # negotiation_streams = ['agriculture', 'gender', 'finance']
+    negotiation_streams = ['finance'] # 
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
         main_unfccc_crawler(driver, webpage, source=source, resource=resource, negotiation_stream=stream)
-        driver = setup_webdriver() 
         conn = connect_database()
-        process_directory(conn, container_name, connection_string, f"{stream}/unfccc/raw_unfccc-decisions")
+        process_directory(conn, container_name, connection_string, f"{stream}/unfccc/staging_unfccc-decisions")
 
 def main():
     load_dotenv()
     container_name = os.getenv('BLOB_CONTAINER_NAME')
     connection_string = os.getenv('BLOB_CONNECTION_STRING')
     driver = setup_webdriver()
+    adjusted_delay(4, 6)
     #crawl and process data from the web
     crawl_and_process_data(driver, container_name, connection_string)  
     # write to vector store  

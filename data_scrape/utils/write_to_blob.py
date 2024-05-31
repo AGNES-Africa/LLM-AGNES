@@ -2,7 +2,7 @@ import pdfplumber
 import os
 import io
 import requests
-from azure.storage.blob import BlobServiceClient
+from azure.storage.blob import BlobServiceClient, ContentSettings
 from dotenv import load_dotenv
 
 
@@ -16,47 +16,37 @@ connection_string = os.getenv('BLOB_CONNECTION_STRING')
 blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 container_name = os.getenv('BLOB_CONTAINER_NAME')
 
-def upload_file_to_blob(pdf_urls,negotiation_stream, source, category_name):
+def upload_file_to_blob(pdf_urls, negotiation_stream, source, category_name):
     """ 
-        Get the blob client for the container
-        Iterate through the PDF URLs and upload each one
-        Download the PDF from the URL
+    Get the blob client for the container
+    Iterate through the PDF URLs and upload each one
+    Download the PDF from the URL
     """
-    counter = 1
     for entry in pdf_urls:      
         url_file = entry['url']
         print("URL file:", url_file)
-        pdf_data = requests.get(url_file, headers=headers).content
-        # print("PDF DATA:", len(pdf_data))
+        response = requests.get(url_file, headers=headers)
+        
+        if 'pdf' not in response.headers.get('Content-Type', '').lower():
+            print(f"URL does not point to a PDF: {url_file}. Content-Type: {response.headers.get('Content-Type')}")
+            continue
+
+        pdf_data = response.content
         blob_directory =f'{negotiation_stream}/{source}/raw_{category_name}' 
-        blob_slug = f"{counter}_{url_file.split('/')[-1]}"
-        counter += 1
+        blob_slug = f"{url_file.split('/')[-1]}"
         blob_name = blob_directory + '/' + blob_slug
 
         blob_client = blob_service_client.get_blob_client(container_name, blob_name)
         
         # Upload the PDF as a blob
-        blob_client.upload_blob(pdf_data, overwrite=True)
+        content_settings = ContentSettings(content_type='application/pdf')
+        blob_client.upload_blob(pdf_data, overwrite=True, content_settings=content_settings)
         print(f"File uploaded to {blob_name} in container {container_name}")
-        return blob_name
 
-def download_blob_to_string(blob_service_client, container_name, negotiation_stream, source, category_name, blob_name):
-    blob_path = f'{negotiation_stream}/{source}/raw_{category_name}/{blob_name}'
-    if not os.path.exists(blob_path):
-        os.makedirs(blob_path)
-    print(f"Blob path: {blob_path}")
-    blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_path)
-    downloader = blob_client.download_blob(max_concurrency=1)
+        # Process the PDF in memory
+        with pdfplumber.open(io.BytesIO(pdf_data)) as pdf:
+            text = ''
+            for page in pdf.pages:
+                text += page.extract_text()
 
-    # Extract the text from the PDF in memory using pdfplumber
-    with pdfplumber.PDF(io.BytesIO(downloader.readall())) as pdf:
-        text = ''
-        for page in pdf.pages:
-            text += page.extract_text()
-
-    # Save the extracted text to a .txt file
-    with open(f'{blob_path}{blob_name}.txt', 'wb') as file:
-        file.write(text.encode())
-        # print(len(text))
-
-    return text
+        yield entry, text
