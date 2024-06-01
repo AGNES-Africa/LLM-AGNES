@@ -15,11 +15,15 @@ from utils.credentials import *
 from utils.write_to_postgres_db import *
 from utils.existing_urls import *
 from utils.reformat_date import *
-import fitz
 from utils.write_to_vector_db import *
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 import random
+import logging
+
+logging.basicConfig(filename="scraper_loader_file.txt",
+                level=logging.INFO,
+                datefmt='%Y/%m/%d %I:%M:%S')
 
 def setup_webdriver():
     """
@@ -84,8 +88,10 @@ def extract_decision(text, symbol):
     # Extract the decisions using the positions of the matches
     decision_texts = [match[0].strip() for match in decisions]
     decision = ''.join(decision_texts)
-    
-    return decision
+    if decision:
+        return decision
+    else:
+        logging.info(f"Error: Decision not found for {symbol}")
 
 def crawl_webpage(base_url, driver, stream):
     """Crawl the webpage, collect document links, and handle 'Load More' button dynamically."""
@@ -101,7 +107,7 @@ def crawl_webpage(base_url, driver, stream):
 
         for element, title_element, div_element in zip(elements_with_href, title_elements, div_elements):
             href = element.get_attribute('href')
-            name = title_element.get_attribute("innerText")
+            name = title_element.get_attribute("innerText").strip()
             symbol = div_element.get_attribute("innerText").replace("Symbol: ", "")
             webpage_urls.append({'document_type': 'Decisions', 'url': href, 'document_name': name, 'document_symbol': symbol})
 
@@ -119,14 +125,14 @@ def crawl_webpage(base_url, driver, stream):
                     scrape_data()  # Scrape hrefs loaded each time load more button is pressed
                     count += 1
             except TimeoutException:
-                print("No more 'Load more' button to click.")
+                logging.info("No more 'Load more' button to click.")
                 break
             except Exception as e:
-                print("An error occurred while trying to click the 'Load more' button:", e)
+                logging.error("An error occurred while trying to click the 'Load more' button", e)
                 break
     else:
         pass
-    print("Completed scraping webpage")
+    logging.info("Completed scraping webpage")
     driver.quit()
     return webpage_urls
 
@@ -146,7 +152,7 @@ def urls_set(all_urls):
 def process_urls(publications_url, driver):
     """Process each URL to extract necessary information and download PDFs."""
     # publications_url = urls_set(publications_url)
-    print(f"Processing {len(publications_url)} URLs...")
+    logging.info(f"Processing {len(publications_url)} URLs...")
     document_data = []
 
     for publication in publications_url:
@@ -165,7 +171,7 @@ def process_urls(publications_url, driver):
             )
             publication_date = publication_date_element.text.strip()
         except NoSuchElementException:
-            print(f"No publication date found for {url}")
+            logging.error(f"No publication date found for {url}")
 
         try:
             document_code_element = WebDriverWait(driver, 10).until(
@@ -173,7 +179,7 @@ def process_urls(publications_url, driver):
             )
             document_code = document_code_element.text.strip()
         except NoSuchElementException:
-            print(f"No document type found for {url}")
+            logging.error(f"No document type found for {url}")
 
         try:
             open_link = driver.find_element(By.XPATH, "//a[contains(text(), 'Open')]")
@@ -183,7 +189,7 @@ def process_urls(publications_url, driver):
                 pdf_link = driver.find_element(By.XPATH, "//a[contains(@href, 'E.pdf') or contains(innerText, 'English') or contains(@href, 'e.pdf') or contains(@href, 'eng') and substring(@href, string-length(@href) - string-length('.pdf') + 1) = '.pdf']")
                 pdf_href = pdf_link.get_attribute('href')
             except NoSuchElementException:
-                print(f"Element not found for {url}. Skipping...")
+                logging.error(f"Element not found for {url}. Skipping...")
                 continue
 
         if pdf_href:
@@ -196,10 +202,10 @@ def process_urls(publications_url, driver):
                 'document_code': document_code,
                 'document_type': document_type
             })
-            print(f"Completed processing {url}")
+            logging.info(f"Completed processing {url}")
             adjusted_delay(4, 6)
         else:
-            print(f"No PDF link found for {url}")
+            logging.info(f"No PDF link found for {url}")
 
         adjusted_delay(2, 4)
 
@@ -227,52 +233,58 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream):
     """Main function to crawl, process, and upload data."""
     all_urls = crawl_webpage(webpage, driver, negotiation_stream)
     adjusted_delay(4, 6)
-    print("All URLs returned")
+    logging.info("All URLs returned")
     adjusted_delay(4, 6)
     driver = setup_webdriver()
     adjusted_delay(4, 6)
     full_urls = process_urls(all_urls, driver)
-    print("Full URLs returned")
+    logging.info("Full URLs returned")
     adjusted_delay(4, 6)
     category_name = source + '-' + resource
     staging_dir = f"staging_{category_name}"
     os.makedirs(staging_dir, exist_ok=True)
 
-    for item, text_content in upload_file_to_blob(full_urls, negotiation_stream, source, category_name):
-        symbol = item.get('document_name')
-        print("symbol:", symbol)
-        title = item.get('title')
-        if 'resolution' not in title.lower():
-            decision_text = extract_decision(text_content, symbol)
-            # Store decisions in memory and upload directly
-            if decision_text:
-                file_name = (title+ '-' + symbol).replace(' ', '_',).replace('/', '_')
-                decision_filename = f"{file_name}.txt"
-                print("decision file name:", decision_filename)
-                # Upload each decision to the blob with metadata
-                decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
-                decision_metadata = {
-                    'Title': title,
-                    'Name': symbol,
-                    'Slug': decision_filename,
-                    'URL': item['url'],
-                    'Created': reformat_date(item['created']),
-                    'Type': item.get('document_type', 'Publication'),
-                    'Code': item.get('document_code', ''),
-                    'Source': source,
-                    'Resource': resource,
-                    'Category': 'unfccc - decisions',
-                    'Summary': item.get('summary', '')
-                }
-                decision_sanitised_metadata = sanitise_metadata(decision_metadata)
-                decision_blob_client = BlobClient.from_connection_string(
-                    conn_str=connection_string,
-                    container_name=container_name,
-                    blob_name=decision_blob_path
-                )
-                decision_blob_client.upload_blob(decision_text, metadata=decision_sanitised_metadata, overwrite=True)
-                print(f"Decision {decision_filename} written to {decision_blob_path}")
-            # driver.quit()
+    for item in full_urls:
+        result = upload_file_to_blob(item, negotiation_stream, source, category_name)
+        if result:
+            entry, text_content = result
+            symbol = entry.get('document_name').strip()
+            logging.info(f"Symbol:{symbol}")
+            title = entry.get('title')
+            if 'resolution' not in title.lower():
+                logging.info(f"URL:{item.get('url')}")
+                decision_text = extract_decision(text_content, symbol)
+
+                # Store decisions in memory and upload directly
+                if decision_text:
+                    file_name = (symbol + '-' + title).replace(' ', '_').replace('/', '_')
+                    decision_filename = f"{file_name}.txt"
+                    logging.info(f"Decisions file name {decision_filename}")
+                    # Upload each decision to the blob with metadata
+                    decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
+                    decision_metadata = {
+                        'Title': title,
+                        'Name': symbol,
+                        'Slug': decision_filename,
+                        'URL': entry['url'],
+                        'Created': reformat_date(entry['created']),
+                        'Type': entry.get('document_type', 'Publication'),
+                        'Code': entry.get('document_code', ''),
+                        'Source': source,
+                        'Resource': resource,
+                        'Category': 'unfccc - decisions',
+                        'Summary': entry.get('summary', '')
+                    }
+                    decision_sanitised_metadata = sanitise_metadata(decision_metadata)
+                    decision_blob_client = BlobClient.from_connection_string(
+                        conn_str=connection_string,
+                        container_name=container_name,
+                        blob_name=decision_blob_path
+                    )
+                    decision_blob_client.upload_blob(decision_text, metadata=decision_sanitised_metadata, overwrite=True)
+                    logging.info(f"Decision {decision_filename} written to {decision_blob_path}")
+
+    # driver.quit()
 
 
 def crawl_and_process_data(driver, container_name, connection_string):
@@ -280,13 +292,13 @@ def crawl_and_process_data(driver, container_name, connection_string):
     source = 'unfccc'
     resource = 'decisions'
     negotiation_streams = ['agriculture', 'gender', 'finance']
-    # negotiation_streams = ['gender'] # 
+    # negotiation_streams = ['finance'] # 
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
         main_unfccc_crawler(driver, webpage, source=source, resource=resource, negotiation_stream=stream)
-        conn = connect_database()
-        process_directory(conn, container_name, connection_string, f"{stream}/unfccc/staging_unfccc-decisions")
+        # conn = connect_database()
+        # process_directory(conn, container_name, connection_string, f"{stream}/unfccc/staging_unfccc-decisions")
 
 def main():
     load_dotenv()
