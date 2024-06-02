@@ -78,7 +78,7 @@ def extract_decision(text, symbol):
     Extract decisions that match the given symbol.
     """
     # Regular expression to match "Decision" followed by the specific symbol
-    decision_pattern = re.compile(rf'(Decision\s+{re.escape(symbol)}.*?)((?=Decision\s+\d+/\w+\.\d+)|$)', re.DOTALL)
+    decision_pattern = re.compile(rf'(Decision\s+{re.escape(symbol)}.*?)((?=Decision\s+\d+/\w+\.\d+\s+)|$)', re.DOTALL)
 
     # Find all matches for the decision pattern
     decisions = decision_pattern.findall(text)
