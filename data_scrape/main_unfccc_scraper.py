@@ -21,9 +21,7 @@ from webdriver_manager.chrome import ChromeDriverManager
 import random
 import logging
 
-logging.basicConfig(filename="scraper_loader_file.txt",
-                level=logging.INFO,
-                datefmt='%Y/%m/%d %I:%M:%S')
+logging.basicConfig(format='%(asctime)s %(message)s', filename='scraper_loader.log', filemode='w', level=logging.INFO)
 
 def setup_webdriver():
     """
@@ -111,27 +109,15 @@ def crawl_webpage(base_url, driver, stream):
             symbol = div_element.get_attribute("innerText").replace("Symbol: ", "")
             webpage_urls.append({'document_type': 'Decisions', 'url': href, 'document_name': name, 'document_symbol': symbol})
 
-    # Initial scrape
-    scrape_data()
     if stream == "finance":
-        count = 0
-        while count < 9:
-    # Process 'Load More' button if present
-            try:
-                load_more_button = WebDriverWait(driver, 60).until(EC.element_to_be_clickable((By.LINK_TEXT, 'Load More')))
-                if load_more_button and load_more_button.is_displayed():
-                    load_more_button.send_keys(Keys.ENTER)
-                    adjusted_delay(6, 10)
-                    scrape_data()  # Scrape hrefs loaded each time load more button is pressed
-                    count += 1
-            except TimeoutException:
-                logging.info("No more 'Load more' button to click.")
-                break
-            except Exception as e:
-                logging.error("An error occurred while trying to click the 'Load more' button", e)
-                break
+        for page in range(0, 6):
+            driver.get(f"{base_url}&page={page}")
+            scrape_data()
+            adjusted_delay(3, 5)
     else:
-        pass
+        # Initial scrape
+        scrape_data()
+   
     logging.info("Completed scraping webpage")
     driver.quit()
     return webpage_urls
@@ -171,7 +157,7 @@ def process_urls(publications_url, driver):
             )
             publication_date = publication_date_element.text.strip()
         except NoSuchElementException:
-            logging.error(f"No publication date found for {url}")
+            logging.info(f"No publication date found for {url}")
 
         try:
             document_code_element = WebDriverWait(driver, 10).until(
@@ -179,7 +165,7 @@ def process_urls(publications_url, driver):
             )
             document_code = document_code_element.text.strip()
         except NoSuchElementException:
-            logging.error(f"No document type found for {url}")
+            logging.info(f"No document type found for {url}")
 
         try:
             open_link = driver.find_element(By.XPATH, "//a[contains(text(), 'Open')]")
@@ -189,7 +175,7 @@ def process_urls(publications_url, driver):
                 pdf_link = driver.find_element(By.XPATH, "//a[contains(@href, 'E.pdf') or contains(innerText, 'English') or contains(@href, 'e.pdf') or contains(@href, 'eng') and substring(@href, string-length(@href) - string-length('.pdf') + 1) = '.pdf']")
                 pdf_href = pdf_link.get_attribute('href')
             except NoSuchElementException:
-                logging.error(f"Element not found for {url}. Skipping...")
+                logging.info(f"Element not found for {url}. Skipping...")
                 continue
 
         if pdf_href:
@@ -292,13 +278,13 @@ def crawl_and_process_data(driver, container_name, connection_string):
     source = 'unfccc'
     resource = 'decisions'
     negotiation_streams = ['agriculture', 'gender', 'finance']
-    # negotiation_streams = ['finance'] # 
+    # negotiation_streams = ['finance'] # for testing
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
         main_unfccc_crawler(driver, webpage, source=source, resource=resource, negotiation_stream=stream)
-        # conn = connect_database()
-        # process_directory(conn, container_name, connection_string, f"{stream}/unfccc/staging_unfccc-decisions")
+        conn = connect_database()
+        process_directory(conn, container_name, connection_string, f"{stream}/unfccc/staging_unfccc-decisions")
 
 def main():
     load_dotenv()

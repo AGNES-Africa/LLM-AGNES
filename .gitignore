@@ -4,3 +4,4 @@
 **/scraper_venv*
 .env
 **/scraper_loader_file.txt
+**/scraper_loader.log
