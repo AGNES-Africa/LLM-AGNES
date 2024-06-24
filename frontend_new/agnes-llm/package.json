@@ -43,6 +43,8 @@
   },
   "devDependencies": {
     "@types/pg": "^8.11.6",
+    "@types/stopword": "^2.0.3",
+    "@types/string-similarity": "^4.0.2",
     "autoprefixer": "^10.4.19",
     "postcss": "^8.4.38",
     "prettier": "3.0.0",
