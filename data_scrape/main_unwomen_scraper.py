@@ -5,7 +5,8 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.webdriver.common.keys import Keys
 from azure.storage.blob import BlobServiceClient, BlobClient
 from dotenv import load_dotenv
 from utils.write_to_blob import *
@@ -14,26 +15,42 @@ from utils.credentials import *
 from utils.write_to_postgres_db import *
 from utils.existing_urls import *
 from utils.reformat_date import *
-import fitz
 from utils.write_to_vector_db import *
+from selenium.webdriver.chrome.service import Service as ChromeService
+from webdriver_manager.chrome import ChromeDriverManager
+import random
+import logging
+
+logging.basicConfig(format='%(asctime)s %(message)s', filename='scraper_loader.log', filemode='w', level=logging.INFO)
 
 def setup_webdriver():
-    """Initialise and return a configured instance of a Chrome WebDriver."""
+    """
+    Setup and return a Selenium WebDriver with human-like behavior.
+    """
     options = webdriver.ChromeOptions()
-    prefs = {
-        "plugins.always_authorize": True,
-        "download.prompt_for_download": False,
-        "download.directory_upgrade": True,
-        "plugins.always_open_pdf_externally": True
-    }
-    options.add_experimental_option("prefs", prefs)
-    # driver_path = os.getenv("DRIVER_PATH")
-    return webdriver.Chrome(options=options)
+    options.add_argument("start-maximized")
+    options.add_argument("disable-infobars")
+    options.add_argument("--disable-extensions")
+    options.add_argument("--disable-gpu")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--remote-debugging-port=9222")
+    options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    return driver
+
 
 def connect_database():
     """Establish and return a database connection using the connection string from environment variables."""
     conn_str = get_uri()
     return psycopg2.connect(conn_str)
+
+def adjusted_delay(min_delay=1, max_delay=3):
+    """
+    Introduce a random delay to mimic human interaction.
+    """
+    time.sleep(random.uniform(min_delay, max_delay))
+
 
 def get_blob_client(negotiation_stream, source, category_name, filename):
     """Return a BlobClient for a given file path in blob storage."""
@@ -64,8 +81,6 @@ def sanitise_metadata(metadata):
     return sanitised_metadata
 
 def crawl_webpage(driver, start, end):
-    # options = webdriver.ChromeOptions()
-    # driver = webdriver.Chrome(options=options)
     all_data = []
 
     # Function to get publication data for a un women pages and resource type
@@ -104,25 +119,25 @@ def crawl_webpage(driver, start, end):
         "Manuals/guides": "1410",
         "Data/statistics": "1411",
         "Assessments": "2105",
-        # "Best practices": "2106",
-        # "Discussion papers": "2111",
+        "Best practices": "2106",
+        "Discussion papers": "2111",
         "Case studies": "2108",
-        # "Policy papers": "2115",
-        # "Evaluation reports": "2122",
-        # "Institutional reports": "2123",
-        # "Infographics": "2134",
-        # "Brochures": "2131",
-        # "Newsletters/magazines": "1435",
-        # "Annual reports": "2119",
-        # "Issue papers": "2135",
-        # "Resource kits": "2118",
-        # "Proceedings": "2116",
-        # "Project/programme reports": "1425",
-        # "Intergovernmental reports": "2158",
+        "Policy papers": "2115",
+        "Evaluation reports": "2122",
+        "Institutional reports": "2123",
+        "Infographics": "2134",
+        "Brochures": "2131",
+        "Newsletters/magazines": "1435",
+        "Annual reports": "2119",
+        "Issue papers": "2135",
+        "Resource kits": "2118",
+        "Proceedings": "2116",
+        "Project/programme reports": "1425",
+        "Intergovernmental reports": "2158",
         "Position reports": "1440",
-        # "Strategic plans": "2129",
-        # "Flagship reports": "2112",
-        # "Expert group meeting reports": "2154"
+        "Strategic plans": "2129",
+        "Flagship reports": "2112",
+        "Expert group meeting reports": "2154"
     }
 
     # Iterate over the resource type map and collect data for each resource type
@@ -212,86 +227,61 @@ def sanitise_text(text):
     sanitised = re.sub(r'\s+', ' ', sanitised)
     return sanitised.strip()
 
-def main_unfccc_crawler(driver, source, resource, negotiation_stream):
+def main_unwomen_crawler(driver, source, resource, negotiation_stream):
     """Main function to crawl, process, and upload data."""
     all_urls = crawl_webpage(driver, 0,1)
-    time.sleep(1)
+    adjusted_delay(4, 6)
     print("All URLs returned")
-    time.sleep(1)
+    adjusted_delay(4, 6)
     driver = setup_webdriver()
     full_urls = process_urls(all_urls, driver)
     print("Full URLs returned")
-    time.sleep(4)
+    adjusted_delay(4, 6)
     category_name = source + '-' + resource
-
-    upload_file_to_blob(full_urls, negotiation_stream, source, category_name)
-    time.sleep(2)
-    driver.quit()
-    print(f"Downloaded all files to {category_name}")
     
-    counter = 1
     for item in full_urls:
-        pdf_url = item['url']
-        pdf_filename = f"{counter}_{pdf_url.split('/')[-1]}"
-        counter +=1
-        
-        if pdf_filename.lower().endswith('.pdf'):
-            # Download the PDF content directly without saving locally
-            response = requests.get(pdf_url, headers=headers)
-            time.sleep(3)
-            pdf_content = response.content
+        result = upload_file_to_blob(item, negotiation_stream, source, category_name)
+        if result:
+            entry, text_content = result
+            sanitised_text_content = sanitise_text(text_content)
+            summary = generate_summary_with_gpt3(sanitised_text_content)
+            pdf_filename = entry['url'].split('/')[-1]
+            #Get metadata and other relevant information
+            slug = pdf_filename
+            title = item['title']
+            url = item['url']
+            created = reformat_date(item['created'])
+            document_type = item['document_type']
+            resource_type = item['resource_type']
+            category = "UN Women" + ' - ' + resource_type
+            print("Category:", category)
+            
+            output_filename = f"{pdf_filename}.txt"
+            blob_save = f'{negotiation_stream}/{source}/staging_{category_name}'
+            output_filepath = f'{blob_save}/{output_filename}'
 
-            if pdf_content:
-                try:
-                    pdf_document = fitz.open('pdf', pdf_content)
-                    text_content = ''
-                    for page in pdf_document:
-                        text_content+=page.get_text()
-                    pdf_document.close()
-
-                    sanitised_text_content = sanitise_text(text_content)
-                    summary = generate_summary_with_gpt3(sanitised_text_content, 200)
-
-                    #Get metadata and other relevant information
-                    slug = pdf_filename
-                    title = item['title']
-                    url = item['url']
-                    created = reformat_date(item['created'])
-                    document_type = item['document_type']
-                    resource_type = item['resource_type']
-                    category = "UN Women" + ' - ' + resource_type
-                    print("Category:", category)
-                    
-                    output_filename = f"{pdf_filename}.txt"
-                    blob_save = f'{negotiation_stream}/{source}/raw_{category_name}'
-                    output_filepath = f'{blob_save}/{output_filename}'
-
-                    metadata = {
-                        'Title': title,
-                        'Name': title,
-                        'Slug': slug,
-                        'URL': url,
-                        'Created': created,
-                        'Type': document_type,
-                        'ResourceType': resource_type,
-                        'Source': source,
-                        'Resource': resource,
-                        'Category': category,
-                        'Summary': summary
-                    }
-                    sanitised_metadata = sanitise_metadata(metadata)
-                    blob_client = BlobClient.from_connection_string(
-                        conn_str=connection_string,
-                        container_name=container_name,
-                        blob_name=output_filepath
-                    )
-                    # Upload the PDF content directly to the blob
-                    blob_client.upload_blob(text_content, metadata=sanitised_metadata, overwrite=True)
-                    print(f"Data for {pdf_filename} written to {output_filepath}")
-                except Exception as e:
-                    print(f"URL file for {pdf_filename} could not be converted. Skipping...:{e}")
-            else:
-                print(f"Failed to extract text from {pdf_filename}")
+            metadata = {
+                'Title': title,
+                'Name': title,
+                'Slug': slug,
+                'URL': url,
+                'Created': created,
+                'Type': document_type,
+                'ResourceType': resource_type,
+                'Source': source,
+                'Resource': resource,
+                'Category': category,
+                'Summary': summary
+            }
+            sanitised_metadata = sanitise_metadata(metadata)
+            blob_client = BlobClient.from_connection_string(
+                conn_str=connection_string,
+                container_name=container_name,
+                blob_name=output_filepath
+            )
+            # Upload the PDF content directly to the blob
+            blob_client.upload_blob(text_content, metadata=sanitised_metadata, overwrite=True)
+            print(f"Data for {pdf_filename} written to {output_filepath}")
 
 def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
@@ -302,10 +292,10 @@ def crawl_and_process_data(driver, container_name, connection_string):
     for stream in negotiation_streams:
         # webpage = generate_url(stream)
         driver = setup_webdriver()
-        main_unfccc_crawler(driver, source=source, resource=resource, negotiation_stream=stream)
+        main_unwomen_crawler(driver, source=source, resource=resource, negotiation_stream=stream)
         driver = setup_webdriver() 
         conn = connect_database()
-        process_directory(conn, container_name, connection_string, f"{stream}/un_women/raw_un_women-publications")
+        process_directory(conn, container_name, connection_string, f"{stream}/un_women/staging_un_women-publications")
 
 def main():
     load_dotenv()

@@ -141,11 +141,11 @@ def write_to_db(conn, data):
         cursor = conn.cursor()
         #This is to ensure that the ids for articles remains sequential
         reset_sequence_query ="""
-        SELECT setval('public.Article2_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article2\"), 1), false)""" # remember to switch to the app seq id
-        cursor.execute(reset_sequence_query)
+        SELECT setval('public.Article_Test_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article_Test\"), 1), false)""" # remember to switch to the app seq id
+        # cursor.execute(reset_sequence_query)
 
         insert_query = """
-        INSERT INTO public."Article2" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
+        INSERT INTO public."Article_Test" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cursor.execute(insert_query, (
