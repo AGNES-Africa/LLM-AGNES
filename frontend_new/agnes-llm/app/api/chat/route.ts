@@ -34,7 +34,7 @@ import {removeStopwords, eng}  from "stopword";
 import {compareTwoStrings} from "string-similarity";
 
 interface CustomRetrieverInput extends BaseRetrieverInput {}
-const additional_stop_words = ["decision","decisions","latest","recent","main","key","point","points","idea","ideas"];
+const additional_stop_words = ["decision","decisions","latest","recent","main","key","point","points","idea","ideas","unfccc"];
 const postgresOptions = {
   type: "postgres",
   host: process.env.HOST_NAME,
@@ -81,7 +81,7 @@ class CustomRetriever extends BaseRetriever {
     const retriever = vectorstore.asRetriever();
 
     const query_mod = removeStopwords(query.split(" "),eng.concat(additional_stop_words)).join(" ").toLowerCase();
-
+    
     let docs = await retriever._getRelevantDocuments(query_mod);
 
     let metadata_filtered = []
@@ -106,7 +106,7 @@ class CustomRetriever extends BaseRetriever {
       document_ids.push(metadata_filtered[i].id)
     }
 
-    let decisions_docs = [];
+    let decisions_docs: Document[] = [];
 
     if(document_ids.length > 0){
       const config2 = {
@@ -271,13 +271,20 @@ export async function POST(req: NextRequest) {
       (!res.answer.toLowerCase().includes("please provide")) && 
       (!res.answer.toLowerCase().includes("sorry")) &&
       (!res.answer.toLowerCase().includes("i can help")) &&
-      (!res.answer.toLowerCase().includes("feel free"))
+      (!res.answer.toLowerCase().includes("feel free")) &&
+      (!res.answer.toLowerCase().includes("if you have")) &&
+      (!res.answer.toLowerCase().includes("i recommend"))
     ){
       if (res.context){
         if(res.context.length > 0){
+          let processed_urls: string[] = []
           for (let i = 0; i < res.context.length; i++) {
-            let metadata = res.context[i].metadata.url
-            if(!sources.includes(metadata)){
+            let metadata = {
+              "title": res.context[i].metadata.title,
+              "url": res.context[i].metadata.url
+            }
+            if(!processed_urls.includes(metadata.url)){
+              processed_urls.push(metadata.url)
               sources.push(metadata)
             }
           }

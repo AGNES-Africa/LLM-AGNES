@@ -24,7 +24,9 @@ export function ChatMessageBubble(props: { message: Message, aiEmoji?: string, s
             {props.sources?.map((source, i) => (
               <div className="mt-2" key={"source:" + i}>
                 {i + 1}.{
-                  <a target="_blank" href={source} rel="noopener noreferrer">{source}</a>
+                  <span>&nbsp;&nbsp;{source.title}<br/>
+                  <a target="_blank" href={source.url} rel="noopener noreferrer">{source.url}</a>
+                  </span>
                 }
               </div>
             ))}
