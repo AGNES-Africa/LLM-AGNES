@@ -2252,6 +2252,16 @@
   resolved "https://registry.npmjs.org/@types/scheduler/-/scheduler-0.23.0.tgz"
   integrity sha512-YIoDCTH3Af6XM5VuwGG/QL/CJqga1Zm3NkU3HZ4ZHK2fRMPYP1VczsTUqtsf43PH/iJNVlPHAo2oWX7BSdB2Hw==
 
+"@types/stopword@^2.0.3":
+  version "2.0.3"
+  resolved "https://registry.npmjs.org/@types/stopword/-/stopword-2.0.3.tgz"
+  integrity sha512-hioMj0lOvISM+EDevf7ijG8EMbU+J3pj4SstCyfQC1t39uPYpAe7beSfBdU6c1d9jeECTQQtR3UJWtVoUO8Weg==
+
+"@types/string-similarity@^4.0.2":
+  version "4.0.2"
+  resolved "https://registry.npmjs.org/@types/string-similarity/-/string-similarity-4.0.2.tgz"
+  integrity sha512-LkJQ/jsXtCVMK+sKYAmX/8zEq+/46f1PTQw7YtmQwb74jemS1SlNLmARM2Zml9DgdDTWKAtc5L13WorpHPDjDA==
+
 "@types/uuid@^9.0.1":
   version "9.0.8"
   resolved "https://registry.npmjs.org/@types/uuid/-/uuid-9.0.8.tgz"
