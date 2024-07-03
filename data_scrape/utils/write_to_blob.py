@@ -6,6 +6,9 @@ import requests
 from azure.storage.blob import BlobServiceClient, ContentSettings
 from dotenv import load_dotenv
 
+from translate import Translator
+translator= Translator(to_lang="fr")
+
 
 # Load environment variables
 load_dotenv()
@@ -34,7 +37,7 @@ def sanitise_metadata(metadata):
     return sanitised_metadata
 
 
-def upload_file_to_blob(entry, negotiation_stream, source, category_name):
+def upload_file_to_blob(entry, negotiation_stream, language, source, category_name):
     """ 
     Get the blob client for the container
     Iterate through the PDF URLs and upload each one
@@ -50,7 +53,7 @@ def upload_file_to_blob(entry, negotiation_stream, source, category_name):
         return None
 
     pdf_data = response.content
-    blob_directory =f'{negotiation_stream}/{source}/raw_{category_name}' 
+    blob_directory =f'{negotiation_stream}/{language}/{source}/raw_{category_name}' 
     blob_slug = f"{url_file.split('/')[-1]}"
     blob_name = blob_directory + '/' + blob_slug
 
@@ -70,7 +73,7 @@ def upload_file_to_blob(entry, negotiation_stream, source, category_name):
         blob_client_txt = blob_service_client.get_blob_client(container_name, f"{blob_name}.txt")
         text_metadata = {
             'URL': entry['url'],
-            'Summary': entry.get('summary', '')
+            'Summary': translator.translate(entry.get('summary', ''))
         }
         text_sanitised_metadata = sanitise_metadata(text_metadata)
         blob_client_txt.upload_blob(text, metadata=text_sanitised_metadata, overwrite=True)

@@ -6,7 +6,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
-from selenium.webdriver.common.keys import Keys
 from azure.storage.blob import BlobServiceClient, BlobClient
 from dotenv import load_dotenv
 from utils.write_to_blob import *
@@ -20,6 +19,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 import random
 import logging
+from translate import Translator
 
 logging.basicConfig(format='%(asctime)s %(message)s', filename='scraper_loader.log', filemode='w', level=logging.INFO)
 
@@ -35,6 +35,7 @@ def setup_webdriver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--no-sandbox")
     options.add_argument("--remote-debugging-port=9222")
+    options.add_argument("--headless")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
     return driver
@@ -78,7 +79,7 @@ def extract_decision(text, symbol):
     Extract decisions that match the given symbol.
     """
     # Regular expression to match "Decision" followed by the specific symbol
-    decision_pattern = re.compile(rf'(Decision\s+{re.escape(symbol)}.*?)((?=Decision\s+\d+/\w+\.\d+\s+)|$)', re.DOTALL)
+    decision_pattern = re.compile(rf'(Décision\s+{re.escape(symbol)}.*?)((?=Décision\s+\d+/\w+\.\d+\s+)|$)', re.DOTALL)
 
     # Find all matches for the decision pattern
     decisions = decision_pattern.findall(text)
@@ -172,7 +173,7 @@ def process_urls(publications_url, driver):
             pdf_href = open_link.get_attribute('href')
         except NoSuchElementException:
             try:
-                pdf_link = driver.find_element(By.XPATH, "//a[contains(@href, 'E.pdf') or contains(innerText, 'English') or contains(@href, 'e.pdf') or contains(@href, 'eng') and substring(@href, string-length(@href) - string-length('.pdf') + 1) = '.pdf']")
+                pdf_link = driver.find_element(By.XPATH, "//a[contains(@href, 'F.pdf') or contains(innerText, 'French') or contains(@href, 'f.pdf') or contains(@href, 'fr') and substring(@href, string-length(@href) - string-length('.pdf') + 1) = '.pdf']")
                 pdf_href = pdf_link.get_attribute('href')
             except NoSuchElementException:
                 logging.info(f"Element not found for {url}. Skipping...")
@@ -234,10 +235,10 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream, l
         result = upload_file_to_blob(item, negotiation_stream, language, source, category_name)
         if result:
             entry, text_content = result
-            symbol = entry.get('document_name').strip()
+            symbol = translator.translate(entry.get('document_name').strip())
             logging.info(f"Symbol:{symbol}")
-            title = entry.get('title')
-            if 'resolution' not in title.lower():
+            title = translator.translate(entry.get('title'))
+            if 'résolution' not in title.lower():
                 logging.info(f"URL:{item.get('url')}")
                 decision_text = extract_decision(text_content, symbol)
 
@@ -247,19 +248,19 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream, l
                     decision_filename = f"{file_name}.txt"
                     logging.info(f"Decisions file name {decision_filename}")
                     # Upload each decision to the blob with metadata
-                    decision_blob_path = f"{negotiation_stream}/{source}/staging_{category_name}/{decision_filename}"
+                    decision_blob_path = f"{negotiation_stream}/french/{source}/staging_{category_name}/{decision_filename}"
                     decision_metadata = {
                         'Title': title,
                         'Name': symbol,
                         'Slug': decision_filename,
-                        'URL': entry['url'],
+                        'URL': translator.translate(entry['url']),
                         'Created': reformat_date(entry['created']),
-                        'Type': entry.get('document_type', 'Publication'),
-                        'Code': entry.get('document_code', ''),
+                        'Type': translator.translate(entry.get('document_type', 'Publication')),
+                        'Code': translator.translate(entry.get('document_code', '')),
                         'Source': source,
                         'Resource': resource,
                         'Category': 'unfccc - decisions',
-                        'Summary': entry.get('summary', '')
+                        'Summary': translator.translate(entry.get('summary', ''))
                     }
                     decision_sanitised_metadata = sanitise_metadata(decision_metadata)
                     decision_blob_client = BlobClient.from_connection_string(
@@ -276,16 +277,16 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream, l
 def crawl_and_process_data(driver, container_name, connection_string):
     """Crawl and process data using the provided driver and directories."""
     source = 'unfccc'
-    language = 'english'
     resource = 'decisions'
-    negotiation_streams = ['agriculture', 'gender', 'finance']
+    language = 'french'
+    negotiation_streams = ['agriculture'] #, 'gender', 'finance'
     # negotiation_streams = ['finance'] # for testing
     for stream in negotiation_streams:
         webpage = generate_url(stream)
         driver = setup_webdriver()
         main_unfccc_crawler(driver, webpage, source=source, resource=resource, negotiation_stream=stream, language=language)
         conn = connect_database()
-        process_directory(conn, container_name, connection_string, f"{stream}/{language}/unfccc/staging_unfccc-decisions", "public", language)
+        process_directory(conn, container_name, connection_string, f"{stream}/{language}/unfccc/staging_unfccc-decisions", language)
 
 def main():
     load_dotenv()

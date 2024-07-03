@@ -3,7 +3,7 @@ import pandas as pd
 from azure.storage.blob import BlobClient
 from utils.write_to_blob import *
 
-def update_category_table(data, conn, blob_name):
+def update_category_table(schema, data, conn, blob_name):
 
     # Check if data is a dictionary and convert it to a DataFrame
     if isinstance(data, dict):
@@ -12,7 +12,7 @@ def update_category_table(data, conn, blob_name):
         df = data
 
     cursor = conn.cursor()
-    cursor.execute('SELECT id, trim(lower(title)) as db_title FROM public."Category";')
+    cursor.execute(f'SELECT id, trim(lower(title)) as db_title FROM {schema}."Category";')
     existing_categories = cursor.fetchall()
     category_dict = {name: cid for cid, name in existing_categories}
 

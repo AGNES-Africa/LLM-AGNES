@@ -135,17 +135,17 @@ def extract_data_from_file(file_name, blob_client):
 
     return data
 
-def write_to_db(conn, data):
+def write_to_db(schema, conn, data):
     """Inserts data into the database with negotiation_stream_id_id and source_id_id."""
     try:
         cursor = conn.cursor()
         #This is to ensure that the ids for articles remains sequential
-        reset_sequence_query ="""
-        SELECT setval('public.Article_Test_id_seq', COALESCE((SELECT MAX(id)+1 FROM public.\"Article_Test\"), 1), false)""" # remember to switch to the app seq id
+        reset_sequence_query =f"""
+        SELECT setval('{schema}.Article', COALESCE((SELECT MAX(id)+1 FROM {schema}.\"Article\"), 1), false)""" # remember to switch to the app seq id
         # cursor.execute(reset_sequence_query)
 
-        insert_query = """
-        INSERT INTO public."Article_Test" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
+        insert_query = f"""
+        INSERT INTO {schema}."Article" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
         """
         cursor.execute(insert_query, (
@@ -166,7 +166,7 @@ def write_to_db(conn, data):
         print(f"Error inserting data into database: {e}")
         conn.rollback()
 
-def process_directory(conn, container_name, connection_string, blob_directory_name):
+def process_directory(conn, container_name, connection_string, blob_directory_name, schema):
     """Processes files in a directory, applying specific logic for source_id_id based on subdirectory."""
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     container_client = blob_service_client.get_container_client(container_name)
@@ -181,7 +181,7 @@ def process_directory(conn, container_name, connection_string, blob_directory_na
             data = blob_client.download_blob().readall()
             data = extract_data_from_file(blob.name, blob_client)
             source_id, resource_id = get_ref_id(blob.name)
-            category_id, category_name = update_category_table(data, conn, blob.name)
+            category_id, category_name = update_category_table(schema, data, conn, blob.name)
             # print(f"File: {blob.name}, Source ID: {source_id}")
             # print(f"File: {blob.name}, Resource ID: {resource_id}")
             data['source_id_id'] = source_id # Set the source ID based on the directory
@@ -199,7 +199,7 @@ def process_directory(conn, container_name, connection_string, blob_directory_na
             # print(data)
             
             # if data['url'] not in urls:
-            write_to_db(conn, data) # comment if you want to test
+            write_to_db(schema, conn, data) # comment if you want to test
             print(f"{len(data)} rows from {blob.name} written to postgres Article table")
         
             # else:
