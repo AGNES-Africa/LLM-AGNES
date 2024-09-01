@@ -88,15 +88,12 @@ export default function SunburstChart(){
             events: {
                 load(this, e:any) {
                     //e.preventDefault()
-                    console.log("load")
                 },
                 redraw(this, e:any) {
                     //e.preventDefault()
-                    console.log("redraw")
                 },
                 render(this, e:any) {
                     //e.preventDefault()
-                    console.log("render")
                 },
             }
         },
@@ -233,7 +230,6 @@ export default function SunburstChart(){
             setTimeout(function(){
                 if (chart.hasOwnProperty("series")){
                     let series = chart.series[0]
-                    console.log(series)
                     if ((root_node === '1') || (root_node === '2') || (root_node === '3')){
                         series.setRootNode(root_node)
                         showLevel(3, chart)

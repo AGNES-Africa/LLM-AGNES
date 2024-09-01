@@ -68,8 +68,6 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
         filteredArticles = filteredArticles.filter((article:any) =>
             article.negotiation_stream_id === parseInt(streamValue)
         );
-        console.log(filteredArticles)
-        console.log(typeof streamValue)
     }
 
     if (hasSearchFilter) {
@@ -78,7 +76,6 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
         article.name.toLowerCase().includes(filterValue.toLowerCase())
       );
     }
-    console.log("here")
 
     return filteredArticles;
   }, [list.items, filterValue, streamValue]);

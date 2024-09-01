@@ -202,7 +202,6 @@ export default function SunburstChart(){
             setTimeout(function(){
                 if (chart.hasOwnProperty("series")){
                     let series = chart.series[0]
-                    console.log(series)
                     if ((root_node === '1') || (root_node === '2') || (root_node === '3')){
                         series.setRootNode(root_node)
                         showLevel(3, chart)
