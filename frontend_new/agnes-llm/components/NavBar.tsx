@@ -5,10 +5,16 @@ import {Navbar, NavbarBrand, NavbarContent, NavbarItem, Link, Button, DropdownIt
 import Image from "next/image";
 import {ChevronDown, Search, Flash} from "./Icons.jsx";
 import { useRouter, usePathname } from 'next/navigation';
+import "flag-icons/css/flag-icons.min.css";
 
 export default function NavBar() {
   const router = useRouter();
   const pathname = usePathname();
+
+  const flags = {
+    uk: <span className="fi fi-gb"></span>,
+    fr: <span className="fi fi-fr"></span>
+  };
 
   const icons = {
 
@@ -45,6 +51,15 @@ export default function NavBar() {
     }
   }
 
+  const set_lang = (key:any) => {
+    if (key == "english"){
+      router.push('/')
+    }
+    else{
+      router.push('/?lang=fr')
+    }
+  }
+
   return (
     <Navbar className='light' maxWidth={'full'}>
       <NavbarBrand>
@@ -67,15 +82,16 @@ export default function NavBar() {
               <Button
                 endContent={icons.chevron}
                 color="primary"
+                variant="flat"
                 size="sm"
                 className="askai"
               >
-                Document Corpus
+                Browse Document Corpus
               </Button>
             </DropdownTrigger>
           </NavbarItem>
           <DropdownMenu
-            aria-label="Document Corpus"
+            aria-label="Browse Document Corpus"
             className="w-[340px] askai"
             itemClasses={{
               base: "gap-4",
@@ -91,11 +107,36 @@ export default function NavBar() {
             </DropdownItem>
             <DropdownItem
               key="latest"
-              description="View the latest Documents added to the corpus."
+              description="View the latest Documents added to the Document Corpus."
               startContent={icons.flash}
             >
               Latest Documents
             </DropdownItem>
+          </DropdownMenu>
+        </Dropdown>
+        <Dropdown className="gray askai">
+          <NavbarItem>
+            <DropdownTrigger>
+              <Button
+                endContent={icons.chevron}
+                color="primary"
+                size="sm"
+                className="askai"
+              >
+                Select Language
+              </Button>
+            </DropdownTrigger>
+          </NavbarItem>
+          <DropdownMenu
+            aria-label="Language"
+            className="w-[340px] askai"
+            itemClasses={{
+              base: "gap-4",
+            }}
+            onAction={(key) => set_lang(key)}
+          >
+            <DropdownItem key="english" startContent={flags.uk}>English (Default)</DropdownItem>
+            <DropdownItem key="french" startContent={flags.fr}>French</DropdownItem>
           </DropdownMenu>
         </Dropdown>
       </NavbarContent>
