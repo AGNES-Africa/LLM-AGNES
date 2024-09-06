@@ -119,15 +119,7 @@ def extract_data_from_file(file_name, blob_client):
 
     summary = metadata.get('Summary')
     if summary:
-        data['summary'] = summary
-
-    # if title and 'unfccc' in blob_client.blob_name.lower():
-    #     data['summary'] = title
-    #     data['title'] = name
-    # else:
-    #     data['summary'] = summary
-    #     data['title'] = title
-     
+        data['summary'] = summary     
 
     category_name = metadata.get('Category')
     if category_name:
@@ -141,8 +133,8 @@ def write_to_db(schema, conn, data):
         cursor = conn.cursor()
         #This is to ensure that the ids for articles remains sequential
         reset_sequence_query =f"""
-        SELECT setval('{schema}.Article', COALESCE((SELECT MAX(id)+1 FROM {schema}.\"Article\"), 1), false)""" # remember to switch to the app seq id
-        # cursor.execute(reset_sequence_query)
+        SELECT setval('{schema}.agneslib_article_id_seq', COALESCE((SELECT MAX(id)+1 FROM {schema}."Article"), 1), false)""" # remember to switch to the app seq id
+        cursor.execute(reset_sequence_query)
 
         insert_query = f"""
         INSERT INTO {schema}."Article" ("title", "summary", "slug", "created_at", "url", "negotiation_stream_id_id", "source_id_id","resource_id_id", "category_id_id", "crawled_at") 
@@ -175,15 +167,12 @@ def process_directory(conn, container_name, connection_string, blob_directory_na
     print("All blobs found in:", blob_directory_name)
 
     for blob in blob_list:
-        # file_path = os.path.join(subdir, file)
         if blob.name.endswith('.txt'):
             blob_client = container_client.get_blob_client(blob.name)
             data = blob_client.download_blob().readall()
             data = extract_data_from_file(blob.name, blob_client)
             source_id, resource_id = get_ref_id(blob.name)
             category_id, category_name = update_category_table(schema, data, conn, blob.name)
-            # print(f"File: {blob.name}, Source ID: {source_id}")
-            # print(f"File: {blob.name}, Resource ID: {resource_id}")
             data['source_id_id'] = source_id # Set the source ID based on the directory
             data['resource_id_id'] = resource_id
             data['category_id_id'] = category_id

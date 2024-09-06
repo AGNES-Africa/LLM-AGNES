@@ -17,9 +17,9 @@ from utils.reformat_date import *
 from utils.write_to_vector_db import *
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.chrome import ChromeType
 import random
 import logging
-from translate import Translator
 
 logging.basicConfig(format='%(asctime)s %(message)s', filename='scraper_loader.log', filemode='w', level=logging.INFO)
 
@@ -37,7 +37,7 @@ def setup_webdriver():
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument("--headless")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager(chrome_type=ChromeType.GOOGLE).install()), options=options)
     return driver
 
 def connect_database():
@@ -107,11 +107,12 @@ def crawl_webpage(base_url, driver, stream):
         for element, title_element, div_element in zip(elements_with_href, title_elements, div_elements):
             href = element.get_attribute('href')
             name = title_element.get_attribute("innerText").strip()
-            symbol = div_element.get_attribute("innerText").replace("Symbol: ", "")
+            raw_symbol = div_element.get_attribute("innerText").replace("Symbol: ", "")
+            symbol = raw_symbol.replace(" ", "").upper().strip()
             webpage_urls.append({'document_type': 'Decisions', 'url': href, 'document_name': name, 'document_symbol': symbol})
 
     if stream == "finance":
-        for page in range(0, 6):
+        for page in range(0, 5):
             driver.get(f"{base_url}&page={page}")
             scrape_data()
             adjusted_delay(3, 5)
@@ -235,9 +236,10 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream, l
         result = upload_file_to_blob(item, negotiation_stream, language, source, category_name)
         if result:
             entry, text_content = result
-            symbol = translator.translate(entry.get('document_name').strip())
+            symbol_corrected = entry.get('document_name').replace(" ", "").upper().strip()
+            symbol = symbol_corrected
             logging.info(f"Symbol:{symbol}")
-            title = translator.translate(entry.get('title'))
+            title = ts.translate_text(entry.get('title'), translator='google', to_language='fr')
             if 'résolution' not in title.lower():
                 logging.info(f"URL:{item.get('url')}")
                 decision_text = extract_decision(text_content, symbol)
@@ -253,14 +255,14 @@ def main_unfccc_crawler(driver, webpage, source, resource, negotiation_stream, l
                         'Title': title,
                         'Name': symbol,
                         'Slug': decision_filename,
-                        'URL': translator.translate(entry['url']),
+                        'URL': entry['url'],
                         'Created': reformat_date(entry['created']),
-                        'Type': translator.translate(entry.get('document_type', 'Publication')),
-                        'Code': translator.translate(entry.get('document_code', '')),
+                        'Type': ts.translate_text(entry.get('document_type', 'Publication'), translator='google', to_language='fr'),
+                        'Code': ts.translate_text(entry.get('document_code', ''), translator='google', to_language='fr'),
                         'Source': source,
                         'Resource': resource,
                         'Category': 'unfccc - decisions',
-                        'Summary': translator.translate(entry.get('summary', ''))
+                        'Summary': ts.translate_text(entry.get('summary', ''), translator='google', to_language='fr')
                     }
                     decision_sanitised_metadata = sanitise_metadata(decision_metadata)
                     decision_blob_client = BlobClient.from_connection_string(
@@ -279,7 +281,7 @@ def crawl_and_process_data(driver, container_name, connection_string):
     source = 'unfccc'
     resource = 'decisions'
     language = 'french'
-    negotiation_streams = ['agriculture'] #, 'gender', 'finance'
+    negotiation_streams = ['agriculture', 'gender', 'finance']
     # negotiation_streams = ['finance'] # for testing
     for stream in negotiation_streams:
         webpage = generate_url(stream)

@@ -26,3 +26,4 @@ langchain_postgres
 unstructured
 timescale-vector
 webdriver-manager==4.0.1
+translators==5.9.2

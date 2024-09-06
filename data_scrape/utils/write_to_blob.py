@@ -6,8 +6,8 @@ import requests
 from azure.storage.blob import BlobServiceClient, ContentSettings
 from dotenv import load_dotenv
 
-from translate import Translator
-translator= Translator(to_lang="fr")
+import translators as ts
+
 
 
 # Load environment variables
@@ -71,9 +71,11 @@ def upload_file_to_blob(entry, negotiation_stream, language, source, category_na
             text += page.extract_text()
 
         blob_client_txt = blob_service_client.get_blob_client(container_name, f"{blob_name}.txt")
+        summary = ts.translate_text(entry.get('summary', ''), translator='google', to_language='fr')
+        print(summary)
         text_metadata = {
             'URL': entry['url'],
-            'Summary': translator.translate(entry.get('summary', ''))
+            'Summary': summary
         }
         text_sanitised_metadata = sanitise_metadata(text_metadata)
         blob_client_txt.upload_blob(text, metadata=text_sanitised_metadata, overwrite=True)
