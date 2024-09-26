@@ -107,7 +107,7 @@ export default function Home() {
     );
     return (
       <ChatWindowFr
-        endpoint="api/chat"
+        endpoint="api/chatFr"
         emoji="🤖"
         titleText="AGNES LLM"
         placeholder="Tapez votre question ici"
