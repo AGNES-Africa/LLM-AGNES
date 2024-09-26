@@ -63,7 +63,7 @@ class CustomRetriever extends BaseRetriever {
     const config = {
       postgresConnectionOptions: postgresOptions as PoolConfig,
       schemaName: "embed",
-      tableName: "vw_decisions_documents",
+      tableName: "vw_french_decisions_documents",
       columns: {
         idColumnName: "id",
         vectorColumnName: "title_vector",
@@ -112,7 +112,7 @@ class CustomRetriever extends BaseRetriever {
       const config2 = {
         postgresConnectionOptions: postgresOptions as PoolConfig,
         schemaName: "embed",
-        tableName: "vw_decisions_embeddings",
+        tableName: "vw_french_decisions_embeddings",
         columns: {
           idColumnName: "id",
           vectorColumnName: "vector",
@@ -134,7 +134,7 @@ class CustomRetriever extends BaseRetriever {
     const config3 = {
       postgresConnectionOptions: postgresOptions as PoolConfig,
       schemaName: "embed",
-      tableName: "vw_proceedings_embeddings",
+      tableName: "vw_french_proceedings_embeddings",
       columns: {
         idColumnName: "id",
         vectorColumnName: "vector",
@@ -171,9 +171,9 @@ const convertVercelMessageToLangChainMessage = (message: VercelChatMessage) => {
   }
 };
 
-const AGENT_SYSTEM_TEMPLATE = `You are an expert on climate change negotiations. 
-Answer the user's questions based on the below context. 
-If the context doesn't contain any relevant information to the question, search for unfccc documents that can answer the question. If you cannot find an answer don't make something up and ask the user to rephrase his/her question:
+const AGENT_SYSTEM_TEMPLATE = `Vous êtes un expert des négociations sur le changement climatique. 
+Répondez aux questions de l'utilisateur en fonction du contexte ci-dessous. 
+Si le contexte ne contient aucune information pertinente pour la question, recherchez les documents de la CCNUCC pouvant répondre à la question. Si vous ne trouvez pas de réponse, n'inventez rien et demandez à l'utilisateur de reformuler sa question:
 
 <context>
 {context}
@@ -232,7 +232,7 @@ export async function POST(req: NextRequest) {
       new MessagesPlaceholder("input"),
       [
         "user",
-        "Given the above conversation, generate a search query to look up in order to get information relevant to the conversation. If a result is found respond with the query.",
+        "Compte tenu de la conversation ci-dessus, générez une requête de recherche à rechercher afin d'obtenir des informations pertinentes pour la conversation. Si un résultat est trouvé, répondez avec la requête.",
       ],
     ]);
 
@@ -254,14 +254,14 @@ export async function POST(req: NextRequest) {
     });
 
     let res = await conversationalRetrievalChain.invoke({
-      input: previousMessages.concat([
+      input: [
         new HumanMessage(currentMessageContent),
-      ]),
+      ]
     });
 
     let sources:any = [];
 
-    res.answer = res.answer.replace(/\*/g,"")
+    res.answer = res.answer.replaceAll(/\*/g,"")
 
     if(
       (!res.answer.toLowerCase().includes("if you have any questions")) && 
@@ -277,9 +277,9 @@ export async function POST(req: NextRequest) {
       (!res.answer.toLowerCase().includes("feel free")) &&
       (!res.answer.toLowerCase().includes("if you have")) &&
       (!res.answer.toLowerCase().includes("i recommend")) &&
-      (!res.answer.toLowerCase().includes("i am not")) &&
-      (!res.answer.toLowerCase().includes("i am a")) &&
-      (!res.answer.toLowerCase().includes("i'm")) 
+      (!res.answer.toLowerCase().includes("aujourd'hui")) &&
+      (!res.answer.toLowerCase().includes("vous")) &&
+      (!res.answer.toLowerCase().includes("je suis"))
     ){
       if (res.context){
         if(res.context.length > 0){
