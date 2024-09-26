@@ -8,7 +8,7 @@ import { useRef, useState, ReactElement } from "react";
 import type { FormEvent } from "react";
 import type { AgentStep } from "langchain/schema";
 
-import { ChatMessageBubble } from "@/components/ChatMessageBubble";
+import { ChatMessageBubbleFr } from "@/components/ChatMessageBubbleFr";
 import { UploadDocumentsForm } from "@/components/UploadDocumentsForm";
 import { IntermediateStep } from "./IntermediateStep";
 
@@ -111,7 +111,7 @@ export function ChatWindowFr(props: {
             .reverse()
             .map((m, i) => {
               const sourceKey = (messages.length - 1 - i).toString();
-              return (m.role === "system" ? <IntermediateStep key={m.id} message={m}></IntermediateStep> : <ChatMessageBubble key={m.id} message={m} aiEmoji={emoji} sources={sourcesForMessages[sourceKey]}></ChatMessageBubble>)
+              return (m.role === "system" ? <IntermediateStep key={m.id} message={m}></IntermediateStep> : <ChatMessageBubbleFr key={m.id} message={m} aiEmoji={emoji} sources={sourcesForMessages[sourceKey]}></ChatMessageBubbleFr>)
             })
         ) : (
           ""
