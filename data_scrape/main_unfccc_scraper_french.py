@@ -14,7 +14,7 @@ from utils.credentials import *
 from utils.write_to_postgres_db import *
 from utils.existing_urls import *
 from utils.reformat_date import *
-from utils.write_to_vector_db import *
+from utils.write_to_vector_db_french import *
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.chrome import ChromeType
