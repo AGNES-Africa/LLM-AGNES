@@ -37,6 +37,12 @@ def setup_webdriver():
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+    
+    #Anisa - I used the below to get this to run on my laptop
+    #driver = webdriver.Chrome()
+    #cService = ChromeService(executable_path='/opt/homebrew/bin/chromedriver')
+    #driver = webdriver.Chrome(service = cService)
+
     return driver
 
 def connect_database():
@@ -278,10 +284,13 @@ def crawl_and_process_data(driver, container_name, connection_string):
     source = 'unfccc'
     language = 'english'
     resource = 'decisions'
-    negotiation_streams = ['agriculture', 'gender', 'finance']
-    # negotiation_streams = ['finance'] # for testing
+    negotiation_streams = ['agriculture', 'gender', 'finance', 'general']
+    #negotiation_streams = ['general'] # for testing
     for stream in negotiation_streams:
-        webpage = generate_url(stream)
+        if stream == 'general':
+            webpage = 'https://unfccc.int/decisions?f%5B0%5D=conference%3A3958'
+        else:
+            webpage = generate_url(stream)
         driver = setup_webdriver()
         main_unfccc_crawler(driver, webpage, source=source, resource=resource, negotiation_stream=stream, language=language)
         conn = connect_database()
