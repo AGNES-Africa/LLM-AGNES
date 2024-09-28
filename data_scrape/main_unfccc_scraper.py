@@ -36,8 +36,8 @@ def setup_webdriver():
     options.add_argument("--no-sandbox")
     options.add_argument("--remote-debugging-port=9222")
     options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3")
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
     
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
     #Anisa - I used the below to get this to run on my laptop
     #driver = webdriver.Chrome()
     #cService = ChromeService(executable_path='/opt/homebrew/bin/chromedriver')
