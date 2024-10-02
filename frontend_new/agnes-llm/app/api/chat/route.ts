@@ -134,7 +134,7 @@ class CustomRetriever extends BaseRetriever {
     const config3 = {
       postgresConnectionOptions: postgresOptions as PoolConfig,
       schemaName: "embed",
-      tableName: "vw_proceedings_embeddings",
+      tableName: "vw_decisions_embeddings",
       columns: {
         idColumnName: "id",
         vectorColumnName: "vector",
@@ -150,7 +150,30 @@ class CustomRetriever extends BaseRetriever {
     );
   
     const retriever3 = vectorstore3.asRetriever();
-    let proceedings_docs = await retriever3._getRelevantDocuments(query);
+    let decisions_docs2 = await retriever3._getRelevantDocuments(query);
+
+    decisions_docs = Array.from(new Set(decisions_docs.concat(decisions_docs2)));
+
+    const config4 = {
+      postgresConnectionOptions: postgresOptions as PoolConfig,
+      schemaName: "embed",
+      tableName: "vw_proceedings_embeddings",
+      columns: {
+        idColumnName: "id",
+        vectorColumnName: "vector",
+        contentColumnName: "content",
+        metadataColumnName: "metadata",
+      },
+      distanceStrategy: "cosine" as DistanceStrategy
+    };
+
+    const vectorstore4 = new PGVectorStore(
+      new OpenAIEmbeddings({apiKey: process.env.OPENAI_API_KEY, model: "text-embedding-3-small"}),
+      config4
+    );
+  
+    const retriever4 = vectorstore4.asRetriever();
+    let proceedings_docs = await retriever4._getRelevantDocuments(query);
 
     if(decisions_docs.length > 0){
       return decisions_docs
