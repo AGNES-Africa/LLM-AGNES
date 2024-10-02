@@ -6,7 +6,7 @@ import {
   DistanceStrategy,
   PGVectorStore,
 } from "@langchain/community/vectorstores/pgvector";
-import { PoolConfig } from "pg";
+import { PoolConfig, Pool } from "pg";
 
 import { AIMessage, ChatMessage, HumanMessage } from "@langchain/core/messages";
 import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
@@ -44,6 +44,7 @@ const postgresOptions = {
   database: process.env.DB_NAME,
   ssl: true
 }
+const pool = new Pool(postgresOptions);
 
 class CustomRetriever extends BaseRetriever {
   lc_namespace = ["langchain", "retrievers"];
@@ -108,30 +109,34 @@ class CustomRetriever extends BaseRetriever {
 
     let decisions_docs: Document[] = [];
 
-    if(document_ids.length > 0){
-      const config2 = {
-        postgresConnectionOptions: postgresOptions as PoolConfig,
-        schemaName: "embed",
-        tableName: "vw_french_decisions_embeddings",
-        columns: {
-          idColumnName: "id",
-          vectorColumnName: "vector",
-          contentColumnName: "content",
-          metadataColumnName: "metadata",
-        },
-        distanceStrategy: "cosine" as DistanceStrategy
-      };
+    const config2 = {
+      postgresConnectionOptions: postgresOptions as PoolConfig,
+      schemaName: "embed",
+      tableName: "vw_french_decisions_embeddings",
+      columns: {
+        idColumnName: "id",
+        vectorColumnName: "vector",
+        contentColumnName: "content",
+        metadataColumnName: "metadata",
+      },
+      distanceStrategy: "cosine" as DistanceStrategy
+    };
 
-      const vectorstore2 = new PGVectorStore(
-        new OpenAIEmbeddings({apiKey: process.env.OPENAI_API_KEY, model: "text-embedding-3-small"}),
-        config2
-      );
-    
+    const vectorstore2 = new PGVectorStore(
+      new OpenAIEmbeddings({apiKey: process.env.OPENAI_API_KEY, model: "text-embedding-3-small"}),
+      config2
+    );
+
+    if(document_ids.length > 0){
       const retriever2 = vectorstore2.asRetriever({filter:{document_id:{"in":document_ids}}});
       decisions_docs = await retriever2._getRelevantDocuments(query);
     }
-    
-    const config3 = {
+    else{
+      const retriever3 = vectorstore2.asRetriever();
+      decisions_docs = await retriever3._getRelevantDocuments(query);
+    }
+
+    const config4 = {
       postgresConnectionOptions: postgresOptions as PoolConfig,
       schemaName: "embed",
       tableName: "vw_french_proceedings_embeddings",
@@ -144,13 +149,13 @@ class CustomRetriever extends BaseRetriever {
       distanceStrategy: "cosine" as DistanceStrategy
     };
 
-    const vectorstore3 = new PGVectorStore(
+    const vectorstore4 = new PGVectorStore(
       new OpenAIEmbeddings({apiKey: process.env.OPENAI_API_KEY, model: "text-embedding-3-small"}),
-      config3
+      config4
     );
   
-    const retriever3 = vectorstore3.asRetriever();
-    let proceedings_docs = await retriever3._getRelevantDocuments(query);
+    const retriever4 = vectorstore4.asRetriever();
+    let proceedings_docs = await retriever4._getRelevantDocuments(query);
 
     if(decisions_docs.length > 0){
       return decisions_docs
@@ -158,6 +163,14 @@ class CustomRetriever extends BaseRetriever {
     return decisions_docs.concat(proceedings_docs);
   }
 }
+
+async function _fetchDataFromDatabase(
+  query: string,
+): Promise<any[]> {
+  const res = await pool.query(query);
+  return res.rows
+}
+
 
 export const runtime = "nodejs";
 
@@ -254,43 +267,78 @@ export async function POST(req: NextRequest) {
     });
 
     let res = await conversationalRetrievalChain.invoke({
-      input: [
+      input: previousMessages.concat([
         new HumanMessage(currentMessageContent),
-      ]
+      ]),
     });
 
     let sources:any = [];
 
-    res.answer = res.answer.replaceAll(/\*/g,"")
+    res.answer = res.answer.replace(/\*/g,"")
+
+    const regex = /\d+\/CP\.\d+|\d+\/CMA\.\d+/g;
+    let decisions = res.answer.match(regex)
+
+    let processed_urls: string[] = [];
+    let processed_titles: string[] = [];
 
     if(
-      (!res.answer.toLowerCase().includes("if you have any questions")) && 
-      (!res.answer.toLowerCase().includes("do you have")) && 
-      (!res.answer.toLowerCase().includes("here to help")) && 
-      (!res.answer.toLowerCase().includes("here to provide")) && 
-      (!res.answer.toLowerCase().includes("rephrase")) && 
-      (!res.answer.toLowerCase().includes("cannot provide")) && 
-      (!res.answer.toLowerCase().includes("can't provide")) &&
-      (!res.answer.toLowerCase().includes("please provide")) && 
-      (!res.answer.toLowerCase().includes("sorry")) &&
-      (!res.answer.toLowerCase().includes("i can help")) &&
-      (!res.answer.toLowerCase().includes("feel free")) &&
-      (!res.answer.toLowerCase().includes("if you have")) &&
-      (!res.answer.toLowerCase().includes("i recommend")) &&
-      (!res.answer.toLowerCase().includes("aujourd'hui")) &&
-      (!res.answer.toLowerCase().includes("vous")) &&
-      (!res.answer.toLowerCase().includes("je suis"))
+      (decisions !== null) ||
+      (
+        (!res.answer.toLowerCase().includes("vous avez")) && 
+        (!res.answer.toLowerCase().includes("avez vous")) &&
+        (!res.answer.toLowerCase().includes("tu as")) && 
+        (!res.answer.toLowerCase().includes("as tu")) && 
+        (!res.answer.toLowerCase().includes("ici pour aider")) && 
+        (!res.answer.toLowerCase().includes("ici pour fournir")) && 
+        (!res.answer.toLowerCase().includes("s'il te plaît")) &&
+        (!res.answer.toLowerCase().includes("s'il vous plaît")) && 
+        (!res.answer.toLowerCase().includes("désolé")) &&
+        (!res.answer.toLowerCase().includes("je peux")) &&
+        (!res.answer.toLowerCase().includes("si tu as")) &&
+        (!res.answer.toLowerCase().includes("n'hésitez pas")) &&
+        (!res.answer.toLowerCase().includes("je ne")) &&
+        (!res.answer.toLowerCase().includes("je suis"))
+      )
     ){
+      if (decisions !== null){
+        let query_str = "SELECT title, url FROM embed.french_decisions_documents WHERE";
+        for (let i = 0; i < decisions.length; i++) {
+          let decision = decisions[i]
+          if (i == 0){
+            query_str = query_str + " title LIKE '" + decision + "%'"
+          }
+          else{
+            query_str = query_str + " OR title LIKE '" + decision + "%'"
+          }
+        }
+        const pool = new Pool(postgresOptions);
+        let decision_results = await _fetchDataFromDatabase(query_str)
+  
+        for (let i = 0; i < decision_results.length; i++) {
+          let title = decision_results[i].title;
+          title = "Décision - " + title.substring(0, title.indexOf("-")).trim();
+          let metadata = {
+            "title": title,
+            "url": decision_results[i].url
+          };
+          if(!processed_titles.includes(title)){
+            processed_titles.push(title)
+            sources.push(metadata)
+          }
+        }
+      }
       if (res.context){
         if(res.context.length > 0){
-          let processed_urls: string[] = []
           for (let i = 0; i < res.context.length; i++) {
+            let title = res.context[i].metadata.title.trim();
             let metadata = {
-              "title": res.context[i].metadata.title,
+              "title": title,
               "url": res.context[i].metadata.url
             }
-            if(!processed_urls.includes(metadata.url)){
+            if((!processed_urls.includes(metadata.url)) && (!processed_titles.includes(metadata.title))){
               processed_urls.push(metadata.url)
+              processed_titles.push(metadata.title)
               sources.push(metadata)
             }
           }
