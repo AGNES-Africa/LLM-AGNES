@@ -288,7 +288,9 @@ export async function POST(req: NextRequest) {
         (!res.answer.toLowerCase().includes("if you have any questions")) && 
         (!res.answer.toLowerCase().includes("do you have")) && 
         (!res.answer.toLowerCase().includes("here to help")) && 
-        (!res.answer.toLowerCase().includes("here to provide")) && 
+        (!res.answer.toLowerCase().includes("here to provide")) &&
+        (!res.answer.toLowerCase().includes("you can")) && 
+        (!res.answer.toLowerCase().includes("can you")) &&
         (!res.answer.toLowerCase().includes("rephrase")) && 
         (!res.answer.toLowerCase().includes("cannot provide")) && 
         (!res.answer.toLowerCase().includes("can't provide")) &&

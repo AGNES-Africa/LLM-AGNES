@@ -288,7 +288,11 @@ export async function POST(req: NextRequest) {
         (!res.answer.toLowerCase().includes("vous avez")) && 
         (!res.answer.toLowerCase().includes("avez vous")) &&
         (!res.answer.toLowerCase().includes("tu as")) && 
-        (!res.answer.toLowerCase().includes("as tu")) && 
+        (!res.answer.toLowerCase().includes("as tu")) &&
+        (!res.answer.toLowerCase().includes("vous pouvez")) && 
+        (!res.answer.toLowerCase().includes("pouvez vous")) &&
+        (!res.answer.toLowerCase().includes("tu peux")) && 
+        (!res.answer.toLowerCase().includes("peux tu")) &&
         (!res.answer.toLowerCase().includes("ici pour aider")) && 
         (!res.answer.toLowerCase().includes("ici pour fournir")) && 
         (!res.answer.toLowerCase().includes("s'il te plaît")) &&
