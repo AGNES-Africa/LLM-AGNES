@@ -70,6 +70,11 @@ const AudioRecorder: React.FC<IProps> = ({ onFinish }) => {
 
   return (
     <button
+    title={`${
+      isRecording
+      ? "Stop Recording"
+      : "Record your query"
+    }`}
     onClick={(event) => {
         event.preventDefault(); // Prevent default form submission
         if (!isRecording) {
