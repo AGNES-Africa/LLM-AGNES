@@ -10,7 +10,18 @@ import type { AgentStep } from "langchain/schema";
 
 import { ChatMessageBubble } from "@/components/ChatMessageBubble";
 import { UploadDocumentsForm } from "@/components/UploadDocumentsForm";
+import AudioRecorder from "@/components/AudioRecorder";
 import { IntermediateStep } from "./IntermediateStep";
+
+interface IOnFinish {
+  id: string;
+  audio: Blob;
+}
+
+interface IMessage {
+  id: string;
+  audio: Blob;
+}
 
 export function ChatWindow(props: {
   endpoint: string,
@@ -22,7 +33,37 @@ export function ChatWindow(props: {
   showIntermediateStepsToggle?: boolean
 }) {
   const messageContainerRef = useRef<HTMLDivElement | null>(null);
+  console.log(process.env.OPEN_API_KEY)
 
+  const onFinish = async ({ id, audio }: IOnFinish) => {
+    if (!audio) {
+      console.error("No audio file provided.");
+      return;
+    }
+
+    // Prepare the form data
+    const formData = new FormData();
+    // Append the audio file (assuming it's a Blob) with a filename
+    formData.append("file", audio, "recording.wav");
+
+    try {
+      // Call your API route instead of OpenAI directly
+      const response = await fetch("/api/transcribe", {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        throw new Error(`Transcription failed: ${response.statusText}`);
+      }
+  
+      const transcription = await response.json();
+      setInput(transcription.data.text);
+    } catch (error) {
+      console.error("Error during transcription:", error);
+    }
+  };
+  
   const { endpoint, emptyStateComponent, placeholder, titleText = "An LLM", showIngestForm, showIntermediateStepsToggle, emoji } = props;
 
   const [showIntermediateSteps, setShowIntermediateSteps] = useState(false);
@@ -125,12 +166,18 @@ export function ChatWindow(props: {
           {intemediateStepsToggle}
         </div>
         <div className="flex flex-col sm:flex-row w-full mt-4 sm:mt-6">
-          <input
-            className="grow mr-8 p-4 rounded"
-            value={input}
-            placeholder={placeholder ?? "What is Climate Change?"}
-            onChange={handleInputChange}
-          />
+          <div className="flex border rounded-lg w-full mr-6">
+            <input
+              id="text_input"
+              type="text"
+              className="grow p-4 border-0 focus:ring-0 rounded-l-lg"
+              value={input}
+              placeholder={placeholder ?? "What is Climate Change?"}
+              onChange={handleInputChange}
+            />
+            <AudioRecorder onFinish={onFinish} />
+          </div>
+          
           <button type="submit" className="mt-1 shrink-0 px-8 py-4 bg-sky-600 rounded w-28">
             <div role="status" className={`${(chatEndpointIsLoading || intermediateStepsLoading) ? "" : "hidden"} flex justify-center`}>
               <svg aria-hidden="true" className="w-6 h-6 text-white animate-spin dark:text-white fill-sky-800" viewBox="0 0 100 101" fill="none" xmlns="http://www.w3.org/2000/svg">
