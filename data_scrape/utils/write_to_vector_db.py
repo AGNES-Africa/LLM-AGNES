@@ -46,7 +46,7 @@ def get_blob_raw_text(blob_connection_string, blob_container_name, blob, skip_to
         
         if skip_to_first_decision:
             # skip over table of contents and jump to first decision
-            raw_text = raw_text[next(re.finditer("Decision \d", raw_text)).span()[0]:]
+            raw_text = raw_text[next(re.finditer(r"Decision \d", raw_text)).span()[0]:]
 
         raw_text_result += raw_text
 

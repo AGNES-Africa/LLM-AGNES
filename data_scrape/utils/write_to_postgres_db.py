@@ -14,7 +14,10 @@ source_ids = {
     'staging_wwf': 4,
     'staging_un_women-publications': 5,
     'staging_gcf': 6,
-    'staging_adaptation_fund': 7
+    'staging_adaptation_fund': 7,
+    'staging_ipcc-assessment_reports': 8,  
+    'staging_adaptation-naps': 9,  
+    'staging_adaptation-fund': 10,  
 }
 
 
@@ -29,7 +32,9 @@ resource_patterns = [
     ('staging_un_women', 'gender', 7),
     ('staging_gcf', 'finance', 9),
     ('staging_adaptation_fund', 'finance', 10),
-    ('staging_unfccc', 'finance', 11)
+    ('staging_unfccc', 'finance', 11),
+    ('staging_ipcc', 'ipcc', 12),
+    ('staging_adaptation', 'adaptation', 13)
 ]
 
 def get_ref_id(file_path):
@@ -66,7 +71,11 @@ def nego_stream_id(file_path):
     elif 'finance' in lower_path:
         return 3  
     elif 'agriculture' in lower_path:
-        return 1  
+        return 1
+    elif 'adaptation' in lower_path:
+        return 4
+    elif 'ipcc' in lower_path:
+        return 5
     else:
         return None
 def get_scraped_datetime():

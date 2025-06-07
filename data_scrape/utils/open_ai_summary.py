@@ -8,7 +8,10 @@ from dotenv import load_dotenv
 
 load_dotenv()
 api_key = os.getenv('OPEN_API_KEY')
-os.environ["OPENAI_API_KEY"]=api_key
+if api_key:
+    os.environ["OPENAI_API_KEY"] = api_key
+else:
+    print("Warning: OPEN_API_KEY not found in environment variables")
 
 def generate_summary_with_gpt3(text):
     """

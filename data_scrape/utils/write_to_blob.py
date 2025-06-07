@@ -15,10 +15,13 @@ load_dotenv()
 
 headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3'}
 
-# Initialise the Azure Blob Service Client
+# Get connection string and container name (don't initialize client yet)
 connection_string = os.getenv('BLOB_CONNECTION_STRING')
-blob_service_client = BlobServiceClient.from_connection_string(connection_string)
 container_name = os.getenv('BLOB_CONTAINER_NAME')
+
+def get_blob_service_client():
+    """Initialize blob service client when needed."""
+    return BlobServiceClient.from_connection_string(connection_string)
 
 def sanitise_metadata(metadata):
     """
@@ -57,6 +60,7 @@ def upload_file_to_blob(entry, negotiation_stream, language, source, category_na
     blob_slug = f"{url_file.split('/')[-1]}"
     blob_name = blob_directory + '/' + blob_slug
 
+    blob_service_client = get_blob_service_client()
     blob_client = blob_service_client.get_blob_client(container_name, blob_name)
     
     # Upload the PDF as a blob

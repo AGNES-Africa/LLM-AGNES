@@ -6,3 +6,4 @@
 **/scraper_loader_file.txt
 **/scraper_loader.log
 **/package-lock.json
+node_modules

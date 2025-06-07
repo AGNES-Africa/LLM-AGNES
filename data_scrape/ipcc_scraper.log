@@ -1,0 +1,6 @@
+2025-06-07 22:44:30,858 Processing 12 IPCC reports
+2025-06-07 22:44:30,865 Processing: AR6 Synthesis Report: Climate Change 2023
+2025-06-07 22:44:39,526 Error processing AR6 Synthesis Report: Climate Change 2023: 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-07 22:44:39,526 Processing: AR6 Working Group I: The Physical Science Basis

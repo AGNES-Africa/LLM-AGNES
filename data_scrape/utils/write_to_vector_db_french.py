@@ -42,7 +42,7 @@ def get_blob_raw_text(blob_connection_string, blob_container_name, blob, skip_to
         # raw_text = "".join(filter(lambda char: char in string.printable + "–", raw_text))
 
         # deal with multiple spaces
-        raw_text = re.sub("\s+"," ",raw_text)
+        raw_text = re.sub(r"\s+"," ",raw_text)
         
         if skip_to_first_decision:
             # skip over table of contents and jump to first decision

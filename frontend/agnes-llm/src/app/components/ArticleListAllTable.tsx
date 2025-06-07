@@ -11,6 +11,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
   const [filterValue, setFilterValue] = React.useState("");
   const [streamValue, setStreamValue] = React.useState("");
   const [columns, setColumns] = useState([
+    {name: "#", uid: "number"},
     {name: "Publication", uid: "name"},
     {name: "Created at", uid: "created_at"},
     {name: "Actions", uid: "actions"},
@@ -87,7 +88,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
     const end = start + rowsPerPage;
 
     return filteredItems.slice(start, end);
-  }, [page, filteredItems, rowsPerPage]);
+}, [filteredItems, page, rowsPerPage]);
 
 
   const onRowsPerPageChange = React.useCallback((e:any) => {
@@ -111,55 +112,57 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
   }, []); 
 
 
-  const topContent = React.useMemo(() => {
-    return (
-      <div>
-        <div>
+const topContent = React.useMemo(() => {
+  const streamNames = {
+    '1': 'Agriculture',
+    '2': 'Gender', 
+    '3': 'Finance',
+    '4': 'Adaptation',
+    '5': 'IPCC'
+  };
+  
+  return (
+    <div>
+      <div className="flex justify-between items-center">
         <Select size="sm" color="primary"
             label="Climate Action Stream" 
             className="max-w-xs" 
             value={streamValue}
             onSelectionChange={onStreamSelect}
         >
-            <SelectItem key='1' value='1'>
-                Agriculture
-            </SelectItem>
-            <SelectItem key='2' value='1'>
-                Gender
-            </SelectItem>
+            <SelectItem key='1' value='1'>Agriculture</SelectItem>
+            <SelectItem key='2' value='2'>Gender</SelectItem>
+            <SelectItem key='3' value='3'>Climate Finance</SelectItem>
+            <SelectItem key='4' value='4'>Adaptation</SelectItem>
+            <SelectItem key='5' value='5'>IPCC</SelectItem>
         </Select>
-        </div>
-        <div className="mt-5">
-          <Input
-            isClearable
-            classNames={{
-              base: "w-full sm:max-w-[44%]",
-              inputWrapper: "border-1",
-              input: [
-                "fontsmall",
-              ],
-            }}
-            placeholder="Search by summary text..."
-            size="sm"
-            startContent={<SearchIcon className="text-default-300" />}
-            value={filterValue}
-            variant="bordered"
-            onClear={() => setFilterValue("")}
-            onValueChange={onSearchChange}
-          />
-        </div>
+        
+        {streamValue && (
+          <div className="text-right">
+            <p className="text-sm font-bold">{filteredItems.length} {streamNames[streamValue as keyof typeof streamNames] || 'Climate'} Documents</p>          </div>
+        )}
       </div>
-    );
-  }, [
-    filterValue,
-    streamValue,
-    onSearchChange,
-    onRowsPerPageChange,
-    onStreamSelect,
-    list.items.length,
-    hasSearchFilter,
-    hasStreamFilter
-  ]);
+      
+      <div className="mt-5">
+        <Input
+          isClearable
+          classNames={{
+            base: "w-full sm:max-w-[44%]",
+            inputWrapper: "border-1",
+            input: ["fontsmall"],
+          }}
+          placeholder="Search by summary text..."
+          size="sm"
+          startContent={<SearchIcon className="text-default-300" />}
+          value={filterValue}
+          variant="bordered"
+          onClear={() => setFilterValue("")}
+          onValueChange={onSearchChange}
+        />
+      </div>
+    </div>
+  );
+}, [filterValue, streamValue, onSearchChange, onStreamSelect, filteredItems.length]);
 
 
   const bottomContent = React.useMemo(() => {
@@ -198,15 +201,24 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
   }, [list.items.length, page, pages, hasSearchFilter]);
 
 
-  const renderCell = React.useCallback((article:any, columnKey:any) => {
-    const cellValue = article[columnKey];
-
-    switch (columnKey) {
+const renderCell = React.useCallback((article:any, columnKey:any) => {
+  const cellValue = article[columnKey];
+  
+  switch (columnKey) {
+    case "number":
+      const currentIndex = items.findIndex(item => item === article);
+      return (
+        <div className="flex flex-col">
+          <p className="text-bold text-sm">{currentIndex + 1 + (page - 1) * rowsPerPage}</p>
+        </div>
+      );
       case "name":
         return (
           <div className="flex flex-col">
             <Accordion isCompact defaultExpandedKeys={["item"]} itemClasses={itemClasses}>
-              <AccordionItem key="item" title={article.name} className="fontsmall">{article.condensed_summary}</AccordionItem>
+              <AccordionItem key="item" title={article.name} className="fontsmall">
+                {article.condensed_summary}
+              </AccordionItem>
             </Accordion>
           </div>
         );
@@ -228,20 +240,19 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
               View Detail
             </Button>
             <Button 
-              color="primary" 
-              size="sm" 
-              href={article.url}
-              as={Link}
-              variant="solid"
-            >
-              Visit
-            </Button>
+            color="primary" 
+            size="sm" 
+            onClick={() => window.open(article.url, '_blank')}
+            variant="solid"
+          >
+            Visit
+          </Button>
           </div>
         );
       default:
         return cellValue;
     }
-  }, []);
+  }, [items, page, rowsPerPage]);
 
   return (
     <Container className="light">
@@ -266,7 +277,7 @@ export default function ArticleListAllTable({stream_id,category_id}:any) {
                 </TableColumn>
               )}
             </TableHeader>
-            <TableBody
+           <TableBody
               items={items} 
               isLoading={isLoading}
               loadingContent={<Spinner label="Loading..." />}
