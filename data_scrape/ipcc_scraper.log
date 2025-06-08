@@ -4,3 +4,40 @@
 __root__
   Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
 2025-06-07 22:44:39,526 Processing: AR6 Working Group I: The Physical Science Basis
+2025-06-07 23:10:37,032 Error processing AR6 Working Group I: The Physical Science Basis: ('Connection broken: IncompleteRead(222455722 bytes read, 31434024 more expected)', IncompleteRead(222455722 bytes read, 31434024 more expected))
+2025-06-07 23:10:37,071 Processing: AR6 Working Group II: Impacts, Adaptation and Vulnerability
+2025-06-07 23:10:40,958 Error processing AR6 Working Group II: Impacts, Adaptation and Vulnerability: code=7: no objects found
+2025-06-07 23:10:40,959 Processing: AR6 Working Group III: Mitigation of Climate Change
+2025-06-07 23:17:12,748 Error processing AR6 Working Group III: Mitigation of Climate Change: 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-07 23:17:12,760 Processing: Global Warming of 1.5°C (SR15)
+2025-06-07 23:17:42,712 Error processing Global Warming of 1.5°C (SR15): 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-07 23:17:42,712 Processing: Climate Change and Land (SRCCL)
+2025-06-07 23:18:48,008 Error processing Climate Change and Land (SRCCL): 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-07 23:18:48,020 Processing: Ocean and Cryosphere in a Changing Climate (SROCC)
+2025-06-07 23:20:48,497 Error processing Ocean and Cryosphere in a Changing Climate (SROCC): 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-07 23:20:48,497 Processing: AR5 Synthesis Report: Climate Change 2014
+2025-06-07 23:21:04,385 Error processing AR5 Synthesis Report: Climate Change 2014: 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-07 23:21:04,385 Processing: AR5 Working Group I: Climate Change 2013 - The Physical Science Basis
+2025-06-07 23:54:50,273 Error processing AR5 Working Group I: Climate Change 2013 - The Physical Science Basis: ('Connection broken: IncompleteRead(241124260 bytes read, 142632863 more expected)', IncompleteRead(241124260 bytes read, 142632863 more expected))
+2025-06-07 23:54:50,291 Processing: AR5 Working Group II: Climate Change 2014 - Impacts, Adaptation and Vulnerability
+2025-06-08 00:01:39,030 Error processing AR5 Working Group II: Climate Change 2014 - Impacts, Adaptation and Vulnerability: 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-08 00:01:39,045 Processing: AR5 Working Group III: Climate Change 2014 - Mitigation of Climate Change
+2025-06-08 00:04:53,454 Error processing AR5 Working Group III: Climate Change 2014 - Mitigation of Climate Change: 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
+2025-06-08 00:04:53,525 Processing: AR4 Synthesis Report: Climate Change 2007
+2025-06-08 00:05:06,392 Error processing AR4 Synthesis Report: Climate Change 2007: 1 validation error for ChatOpenAI
+__root__
+  Did not find openai_api_key, please add an environment variable `OPENAI_API_KEY` which contains it, or pass `openai_api_key` as a named parameter. (type=value_error)
